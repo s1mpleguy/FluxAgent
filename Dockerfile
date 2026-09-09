@@ -7,6 +7,6 @@ RUN mvn -DskipTests package
 FROM eclipse-temurin:21-jre
 WORKDIR /app
 ENV JAVA_OPTS=""
-COPY --from=build /workspace/target/echomind-java-0.1.0.jar /app/echomind-java.jar
+COPY --from=build /workspace/target/flux-agent-0.1.0.jar /app/flux-agent.jar
 EXPOSE 8080
-ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar /app/echomind-java.jar"]
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar /app/flux-agent.jar"]

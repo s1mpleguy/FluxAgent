@@ -1,6 +1,8 @@
-# EchoMind Java 版本说明
+# FluxAgent Java 版本说明
 
-EchoMind Java 是 Python 版 EchoMind 的 Java/Spring 技术栈重构版，目录位于：
+FluxAgent 是一个面向企业客服场景的生产级多 Agent 编排平台，当前实现基于 Java/Spring 技术栈，支持智能对话、知识库增强、动态 Skills、记忆管理、质量评测和运行监控。
+
+本仓库是 FluxAgent 的 Java 版本实现。
 
 
 

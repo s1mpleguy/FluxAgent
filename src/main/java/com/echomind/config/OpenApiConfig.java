@@ -16,9 +16,9 @@ public class OpenApiConfig {
     public OpenAPI echoMindOpenAPI() {
         return new OpenAPI()
                 .info(new Info()
-                        .title("EchoMind Java API")
+                        .title("FluxAgent Java API")
                         .version("0.1.0")
-                        .description("EchoMind Java 智能客服系统接口文档，支持在线调试 /chat、/search、知识库、监控和评测接口。")
+                        .description("FluxAgent 智能客服系统接口文档，支持在线调试 /chat、/search、知识库、监控和评测接口。")
                         .license(new License().name("Internal Project")))
                 .servers(List.of(
                         new Server().url("http://localhost:8080").description("Local Java App"),

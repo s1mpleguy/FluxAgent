@@ -5,10 +5,10 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.echomind</groupId>
-    <artifactId>echomind-java</artifactId>
+    <artifactId>flux-agent</artifactId>
     <version>0.1.0</version>
-    <name>EchoMind Java</name>
-    <description>Spring Boot, Spring AI and LangChain4j implementation of EchoMind.</description>
+    <name>FluxAgent</name>
+    <description>Production-grade multi-agent customer support platform built with Spring Boot, Spring AI and LangChain4j.</description>
 
     <properties>
         <java.version>21</java.version>

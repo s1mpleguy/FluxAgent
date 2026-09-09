@@ -3,7 +3,7 @@ server:
 
 spring:
   application:
-    name: echomind-java
+    name: flux-agent
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:anthropic}
   jackson:
