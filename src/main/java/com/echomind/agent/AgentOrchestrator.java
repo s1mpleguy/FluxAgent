@@ -335,6 +335,7 @@ public class AgentOrchestrator {
                 data.put("total", agent.stats().total());
                 data.put("success_rate", round(agent.stats().successRate()));
                 data.put("avg_ms", round(agent.stats().avgLatencyMs()));
+                data.put("total_latency_ms", agent.stats().totalLatencyMs());
                 data.put("monitor_penalty", round(agent.stats().monitorPenalty()));
                 data.put("routing_score", round(agent.stats().routingScore()));
                 result.put(type.name().toLowerCase(Locale.ROOT) + "_" + i, data);

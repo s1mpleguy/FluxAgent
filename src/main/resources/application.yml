@@ -8,6 +8,10 @@ spring:
     active: ${SPRING_PROFILES_ACTIVE:anthropic}
   jackson:
     property-naming-strategy: SNAKE_CASE
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 11MB
   mvc:
     pathmatch:
       matching-strategy: ANT_PATH_MATCHER
@@ -67,6 +71,9 @@ echomind:
     success-rate-threshold: ${MONITOR_SUCCESS_RATE_THRESHOLD:0.90}
     latency-ms-threshold: ${MONITOR_LATENCY_MS_THRESHOLD:3000}
     webhook-url: ${ALERT_WEBHOOK_URL:}
+    anomaly-window-size: ${MONITOR_ANOMALY_WINDOW_SIZE:30}
+    anomaly-min-samples: ${MONITOR_ANOMALY_MIN_SAMPLES:10}
+    zscore-threshold: ${MONITOR_ZSCORE_THRESHOLD:3.0}
   eval:
     baseline-path: ${EVAL_BASELINE_PATH:data/eval/baseline.json}
   skills:

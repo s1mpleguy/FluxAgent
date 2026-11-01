@@ -1,12 +1,12 @@
 # FluxAgent Java 版本说明
 
-FluxAgent 是一个面向企业客服场景的生产级多 Agent 编排平台，当前实现基于 Java/Spring 技术栈，支持智能对话、知识库增强、动态 Skills、记忆管理、质量评测和运行监控。
+FluxAgent 是一个面向企业客服场景的多 Agent 编排平台，当前实现基于 Java/Spring 技术栈，支持智能对话、知识库增强、动态 Skills、记忆管理、质量评测和运行监控。
 
 本仓库是 FluxAgent 的 Java 版本实现。
 
 
 
-当前版本已经覆盖智能客服主链路：对话请求、Redis 工作记忆、知识库检索、多 Agent 路由、Spring AI 模型调用、回答校验、评测、监控、Swagger 文档和 Docker 部署。
+当前版本已经覆盖智能客服主链路：HTTP / CLI 对话、Redis 工作记忆、知识库检索、多 Agent 路由、Spring AI 模型调用、回答校验、评测、监控、Swagger 文档和 Docker 部署。仓库是单模块后端工程，未包含前端界面。工程结构见 `rules/工程结构.md`。
 
 ## 技术栈
 
@@ -47,6 +47,8 @@ POST /chat
 
 ## Python 与 Java 版本对照
 
+下表保留历史迁移说明；本仓库没有 Python 源码，本次验证覆盖 Java 实现，不代表完成了两种实现的逐项对比测试。
+
 | 能力 | Python 版本 | Java 版本 | 当前状态 |
 |------|-------------|-----------|----------|
 | Web 框架 | FastAPI | Spring Boot MVC | 已对齐 |
@@ -62,13 +64,13 @@ POST /chat
 | 知识库 | ChromaDB `knowledge_base` collection | JSON 持久化 Hybrid RAG | 功能对齐，主检索实现不同 |
 | 查询改写 | LLM 改写 | LLM 改写 | 已对齐 |
 | 检索重排 | LLM rerank | LLM rerank，失败回退融合分 | 已对齐 |
-| 工具框架 | 通用 MCPToolManager | 专用 KnowledgeToolManager | 部分对齐 |
-| 熔断/缓存/超时/fallback | 支持 | 支持 | 已对齐到知识库工具 |
+| 工具框架 | 通用 MCPToolManager | ToolDefinition / ToolRegistry / ToolExecutor | 本地注册与执行已支持；未提供远程 MCP 协议 |
+| 熔断/缓存/超时/fallback | 支持 | 通用执行器支持，知识库已接入 | 支持 JSON Schema 校验与失败统计 |
 | 评测 | Intent、Macro-F1、LLM Judge、baseline | Intent、Macro-F1、LLM Judge、baseline | 基本对齐 |
-| 监控 | Prometheus client、Webhook、Z-score | Actuator、Micrometer、Webhook、阈值告警 | 部分对齐 |
+| 监控 | Prometheus client、Webhook、Z-score | Actuator、Micrometer、Webhook、阈值与 Z-score 告警 | 支持恢复状态、聊天直方图和工具成功率 |
 | API 文档 | FastAPI `/docs` | Springdoc Swagger UI `/docs` | 已对齐 |
-| Docker | App、Redis、ChromaDB、Prometheus、Nginx | App、Redis、ChromaDB、Prometheus、Nginx | 已对齐 |
-| CLI | `api/main.py --cli` | 未实现 | Java 缺失 |
+| Docker | App、Redis、ChromaDB、Prometheus、Nginx | App、Redis、Prometheus、Nginx，ChromaDB 可选 | 配置已提供 |
+| CLI | `api/main.py --cli` | 可执行 Jar `--cli` | 复用完整聊天服务 |
 
 ## Java 版已补齐的能力
 
@@ -192,31 +194,41 @@ Java 版现在通过 Springdoc OpenAPI 提供同名入口：
 
 ## 当前仍然不同的地方
 
-### 通用 MCPToolManager 未完整迁移
+### 通用工具管理
 
-Python 版 `MCPToolManager` 可以注册任意 Tool，并统一处理：
+Java 版通过 `ToolDefinition<T>` 定义工具，通过 `ToolRegistry` 注册/注销，通过 `ToolExecutor` 执行。支持：
 
-- register / unregister
-- JSON Schema 参数校验
-- timeout
-- circuit breaker
-- TTL cache
-- fallback
-- rerank
-- 工具统计
+- JSON Schema 2020-12 参数校验（networknt validator）。
+- 每工具超时、失败阈值和熔断恢复；恢复时只允许一个探测请求。
+- TTL 缓存，单工具最多 1024 条；支持显式失效，注销后重新注册不复用旧状态。
+- 降级函数和工具统计。降级返回的数据不计为成功，也不进入缓存。
+- 有界线程池与排队；超时会发出中断取消，工具函数应响应中断并设置自身 I/O 超时。
 
-Java 版当前是专用 `KnowledgeToolManager`，只服务 `knowledge_search`，但已经具备查询改写、并行召回、缓存、超时、熔断、fallback、rerank 和统计。
+`KnowledgeToolManager` 已接入公共执行器，30 秒超时覆盖查询改写、并行召回和重排。导入知识后，缓存键中的数据版本更新，后续请求立即读取新内容。模型重排失败时回退融合分，并返回 `reranked=false`。
 
-要完全对齐，可以继续新增：
+这是 Java 进程内工具扩展机制；远程 MCP 协议连接暂未实现。自定义工具注册示例：
 
-- `ToolDefinition`
-- `ToolRegistry`
-- `ToolExecutor`
-- JSON Schema validator
+```java
+ToolDefinition<String> tool = new ToolDefinition<>(
+    "echo", "回显消息",
+    objectMapper.readTree("""
+        {"type":"object","properties":{"message":{"type":"string"}},
+         "required":["message"],"additionalProperties":false}
+        """),
+    Duration.ofSeconds(5), Duration.ZERO, 5, Duration.ofSeconds(60),
+    parameters -> parameters.get("message").asText(),
+    (parameters, error) -> "服务暂不可用"
+);
+toolRegistry.register(tool);
+ToolResult<String> result = toolExecutor.execute(tool, Map.of("message", "hello"));
+toolRegistry.unregister("echo");
+```
+
+缓存适合只读工具；存在副作用的工具应使用 `Duration.ZERO` 禁用缓存。缓存结果应为不可变对象。
 
 ### ChromaDB 不是 Java 版主检索源
 
-Java 版保留 ChromaDB 容器，并引入了 Spring AI Chroma VectorStore starter，但当前 profile 中排除了 Chroma VectorStore 自动配置，主检索仍然走本地 Hybrid RAG。
+Java 版保留可选 ChromaDB 容器（`docker compose --profile chroma up -d`），并引入了 Spring AI Chroma VectorStore starter，但当前 profile 中排除了 Chroma VectorStore 自动配置，主检索仍然走本地 Hybrid RAG。默认 Compose 启动不再依赖 ChromaDB 健康检查。
 
 原因：
 
@@ -232,34 +244,29 @@ ChromaDB VectorStore semantic search
   + LLM rerank
 ```
 
-### CLI 模式未迁移
+### CLI 模式
 
-Python 版支持：
+CLI 与 `/chat` 共用 `ChatService`，支持记忆、知识检索、Agent 路由和回答校验。需要 JDK 21；Redis 可用时支持工作记忆，无真实模型 Key 时使用已有的本地降级回复。
 
 ```bash
-python api/main.py --cli
+./mvnw clean package
+# Redis 使用本仓库 Compose 的宿主机映射端口时：
+REDIS_PORT=6380 java -jar target/flux-agent-0.1.0.jar --cli --user-id=demo
 ```
 
-Java 版当前没有 CLI。如果需要对齐，可以使用 Spring Shell 或 `CommandLineRunner` 实现。
+也可使用 `./mvnw spring-boot:run -Dspring-boot.run.arguments="--cli --user-id=demo"`。
 
-### 监控算法仍有差异
+输入消息开始对话；`/new` 新建会话，`/help` 查看帮助，`/exit` 或 EOF 退出。可用 `--conversation-id=已有会话ID` 续聊。CLI 不启动 HTTP 监听，退出时关闭 Spring 上下文与工具执行线程。
 
-Python 版监控包含 Z-score 异常检测。
+### 监控
 
-Java 版当前是：
+- 成功率、平均延迟阈值告警，并按照相同配置调整路由惩罚。
+- 使用新增请求的区间平均延迟计算 Z-score；默认保留 30 个样本，至少 10 个样本后检测，阈值为 3。
+- `/monitor` 提供 `active_alerts` 和最多 100 条 `resolved_alerts`；恢复后允许再次触发，触发和恢复均可发送 Webhook。
+- `echomind_chat_duration_seconds_bucket`：HTTP / CLI 完整同步聊天流程耗时直方图，按 `outcome` 区分成功/异常。
+- `echomind_tool_success_rate`：按调用量加权的工具成功率。
 
-- 成功率阈值告警
-- 平均延迟阈值告警
-- Webhook
-- Micrometer 指标
-- 路由惩罚反馈
-
-可继续补：
-
-- Z-score 异常检测
-- 告警 resolved 状态
-- 请求 latency histogram
-- tool success rate gauge
+配置项：`MONITOR_ANOMALY_WINDOW_SIZE`、`MONITOR_ANOMALY_MIN_SAMPLES`、`MONITOR_ZSCORE_THRESHOLD`、`MONITOR_SUCCESS_RATE_THRESHOLD`、`MONITOR_LATENCY_MS_THRESHOLD`、`ALERT_WEBHOOK_URL`。Z-score 的最小样本数应不超过窗口大小。
 
 ## 主要接口
 
@@ -273,7 +280,9 @@ Java 版当前是：
 | POST | `/knowledge/add` | 批量添加知识文档 |
 | POST | `/knowledge/upload` | 上传 `.txt` / `.md` / `.json` 文件 |
 | GET | `/knowledge/stats` | 知识库统计 |
-| GET | `/monitor` | 监控摘要 |
+| GET | `/monitor` | 监控摘要与告警恢复记录 |
+| GET | `/skills` | Skills 加载摘要 |
+| POST | `/skills/reload` | 重新扫描 Skills |
 | GET | `/metrics` | Prometheus 指标，兼容 Python 版路径 |
 | GET | `/actuator/prometheus` | Spring Actuator Prometheus 指标 |
 | POST | `/eval/run` | 运行评测 |
@@ -284,7 +293,7 @@ Java 版配置了 Jackson `SNAKE_CASE`，响应字段会输出为：
 
 ```json
 {
-  "conversation_id": "...",
+  "conv_id": "...",
   "response": "...",
   "intent": "...",
   "agent_type": "...",
@@ -299,7 +308,7 @@ Java 版配置了 Jackson `SNAKE_CASE`，响应字段会输出为：
 和 Python 版主要差异：
 
 - Python 使用 `conv_id`。
-- Java 使用 `conversation_id`。
+- Java 响应使用 `conv_id`，请求兼容 `conv_id` 和 `conversation_id`。
 - Java 额外返回 `verified` 和 `grounded`。
 
 推荐请求字段：
@@ -324,12 +333,13 @@ Java 版配置了 Jackson `SNAKE_CASE`，响应字段会输出为：
 启动依赖：
 
 ```bash
-docker compose up -d redis chromadb
+docker compose up -d redis
 ```
 
 DeepSeek 启动：
 
 ```bash
+export REDIS_PORT=6380
 export SPRING_PROFILES_ACTIVE=deepseek
 export DEEPSEEK_API_KEY=your_key
 ./mvnw spring-boot:run
@@ -338,6 +348,7 @@ export DEEPSEEK_API_KEY=your_key
 Anthropic 启动：
 
 ```bash
+export REDIS_PORT=6380
 export SPRING_PROFILES_ACTIVE=anthropic
 export ANTHROPIC_API_KEY=your_key
 ./mvnw spring-boot:run
@@ -360,12 +371,13 @@ http://localhost:8080/docs
 启动依赖：
 
 ```powershell
-docker compose up -d redis chromadb
+docker compose up -d redis
 ```
 
 DeepSeek 启动：
 
 ```powershell
+$env:REDIS_PORT="6380"
 $env:SPRING_PROFILES_ACTIVE="deepseek"
 $env:DEEPSEEK_API_KEY="your_key"
 .\mvnw.cmd spring-boot:run
@@ -374,6 +386,7 @@ $env:DEEPSEEK_API_KEY="your_key"
 Anthropic 启动：
 
 ```powershell
+$env:REDIS_PORT="6380"
 $env:SPRING_PROFILES_ACTIVE="anthropic"
 $env:ANTHROPIC_API_KEY="your_key"
 .\mvnw.cmd spring-boot:run
@@ -438,7 +451,7 @@ Compose 服务和端口：
 | Java App | `echomind-java-app` | `http://localhost:8080` |
 | Nginx | `echomind-java-nginx` | `http://localhost:8081` |
 | Prometheus | `echomind-java-prometheus` | `http://localhost:9091` |
-| ChromaDB | `echomind-java-chromadb` | `http://localhost:8002` |
+| ChromaDB（可选 profile） | `echomind-java-chromadb` | `http://localhost:8002` |
 | Redis | `echomind-java-redis` | `localhost:6380` |
 
 常用验证：
@@ -510,3 +523,16 @@ curl -X POST http://localhost:8080/eval/run \
   -H "Content-Type: application/json" \
   -d '{}'
 ```
+
+
+## 开发验证
+
+```bash
+./mvnw clean verify
+```
+
+测试覆盖公共工具执行、缓存与熔断、知识检索、告警、CLI、聊天流程、记忆压缩、上传校验与 HTTP 接口。集成测试使用受控的模型与记忆替身，不要求真实 API Key 或 Redis 服务。真实模型回答质量、Redis 服务联通性与容器部署需要在对应环境中验证。
+
+`/search` 返回 `success` 和 `error`，用于区分无结果与检索降级。非法参数返回 HTTP 400，超出上传限制返回 HTTP 413；文件仅允许 `.txt`、`.md`、`.json`（扩展名大小写不敏感），最大 10MB。
+
+镜像已包含 `skills/` 及健康检查所需的 curl。通过 Compose 启动时 `.env` 会被加载；直接运行 Java/Maven 时需自行导出环境变量。

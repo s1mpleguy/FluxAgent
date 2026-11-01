@@ -4,197 +4,158 @@ import com.echomind.knowledge.KnowledgeBaseService;
 import com.echomind.knowledge.SearchResult;
 import com.echomind.llm.LlmGateway;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.annotation.PreDestroy;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 @Service
-public class KnowledgeToolManager {
-
+public class KnowledgeToolManager implements AutoCloseable {
     private final KnowledgeBaseService knowledgeBaseService;
     private final LlmGateway llmGateway;
     private final ObjectMapper objectMapper;
-    private final ToolStats stats = new ToolStats();
-    private final Map<String, CacheEntry> cache = new HashMap<>();
-    private final CircuitBreaker breaker = new CircuitBreaker(5, Duration.ofSeconds(60));
+    private final ToolExecutor executor;
+    private final ToolDefinition<SearchOutput> definition;
+    private final ExecutorService recallWorkers = Executors.newVirtualThreadPerTaskExecutor();
 
-    public KnowledgeToolManager(KnowledgeBaseService knowledgeBaseService, LlmGateway llmGateway, ObjectMapper objectMapper) {
+    public KnowledgeToolManager(KnowledgeBaseService knowledgeBaseService, LlmGateway llmGateway,
+                                ObjectMapper objectMapper, ToolRegistry registry, ToolExecutor executor) {
         this.knowledgeBaseService = knowledgeBaseService;
         this.llmGateway = llmGateway;
         this.objectMapper = objectMapper;
+        this.executor = executor;
+        JsonNode schema = objectMapper.valueToTree(Map.of(
+                "type", "object", "required", List.of("query", "topK", "rewrite", "revision"),
+                "additionalProperties", false,
+                "properties", Map.of(
+                        "query", Map.of("type", "string", "minLength", 1, "pattern", "\\S"),
+                        "topK", Map.of("type", "integer", "minimum", 1, "maximum", 50),
+                        "rewrite", Map.of("type", "boolean"),
+                        "revision", Map.of("type", "integer", "minimum", 0))));
+        this.definition = new ToolDefinition<>("knowledge_search", "知识库混合检索与可选查询改写、重排", schema,
+                Duration.ofSeconds(30), Duration.ofMinutes(5), 5, Duration.ofSeconds(60),
+                this::retrieve, (params, error) -> new SearchOutput(List.of(), false));
+        registry.register(definition);
     }
 
     public ToolResult<List<SearchResult>> searchWithRewrite(String query, int topK) {
-        validate(query, topK);
-        if (!breaker.allow()) {
-            return new ToolResult<>(true, fallback(query, "工具熔断中，请稍后重试"), "knowledge_search", "circuit open", false, 0, false);
-        }
-        Instant start = Instant.now();
-        try {
-            List<String> queries = rewriteQuery(query);
-            Map<String, SearchResult> merged = new LinkedHashMap<>();
-            int recallK = Math.max(topK, 5);
-            List<CompletableFuture<ToolResult<List<SearchResult>>>> futures = queries.stream()
-                    .map(subQuery -> CompletableFuture.supplyAsync(() -> search(subQuery, recallK)))
-                    .toList();
-            for (CompletableFuture<ToolResult<List<SearchResult>>> future : futures) {
-                for (SearchResult result : future.get(30, TimeUnit.SECONDS).data()) {
-                    merged.putIfAbsent(result.id(), result);
-                }
-            }
-            List<SearchResult> reranked = rerank(query, new ArrayList<>(merged.values()), topK);
-            stats.record(true, Duration.between(start, Instant.now()).toMillis());
-            breaker.recordSuccess();
-            return new ToolResult<>(true, reranked, "knowledge_search", null, false,
-                    Duration.between(start, Instant.now()).toMillis(), true);
-        } catch (TimeoutException ex) {
-            stats.record(false, Duration.between(start, Instant.now()).toMillis());
-            breaker.recordFailure();
-            return new ToolResult<>(true, fallback(query, "执行超时"), "knowledge_search", "timeout", false,
-                    Duration.between(start, Instant.now()).toMillis(), false);
-        } catch (Exception ex) {
-            stats.record(false, Duration.between(start, Instant.now()).toMillis());
-            breaker.recordFailure();
-            return new ToolResult<>(true, fallback(query, ex.getMessage()), "knowledge_search", ex.getMessage(), false,
-                    Duration.between(start, Instant.now()).toMillis(), false);
-        }
+        return execute(query, topK, true);
     }
 
     public ToolResult<List<SearchResult>> search(String query, int topK) {
-        validate(query, topK);
-        String key = query + ":" + topK;
-        CacheEntry cached = cache.get(key);
-        if (cached != null && !cached.expired()) {
-            return new ToolResult<>(true, cached.results(), "knowledge_search", null, true, 0, false);
+        return execute(query, topK, false);
+    }
+
+    private ToolResult<List<SearchResult>> execute(String query, int topK, boolean rewrite) {
+        if (query == null || query.isBlank()) { throw new IllegalArgumentException("query 不能为空"); }
+        var result = executor.execute(definition, Map.of("query", query, "topK", topK,
+                "rewrite", rewrite, "revision", knowledgeBaseService.revision()));
+        SearchOutput output = result.data() == null ? new SearchOutput(List.of(), false) : result.data();
+        return new ToolResult<>(result.success(), output.results(), result.toolName(), result.error(),
+                result.cached(), result.latencyMs(), output.reranked());
+    }
+
+    private SearchOutput retrieve(JsonNode parameters) throws Exception {
+        String query = parameters.get("query").asText();
+        int topK = parameters.get("topK").asInt();
+        if (!parameters.get("rewrite").asBoolean()) {
+            return new SearchOutput(List.copyOf(knowledgeBaseService.search(query, topK)), false);
         }
-        Instant start = Instant.now();
+        List<String> queries = rewriteQuery(query);
+        checkInterrupted();
+        List<Future<List<SearchResult>>> futures = new ArrayList<>();
         try {
-            List<SearchResult> results = knowledgeBaseService.search(query, topK);
-            cache.put(key, new CacheEntry(results, Instant.now().plusSeconds(300)));
-            return new ToolResult<>(true, results, "knowledge_search", null, false,
-                    Duration.between(start, Instant.now()).toMillis(), false);
-        } catch (Exception ex) {
-            return new ToolResult<>(true, fallback(query, ex.getMessage()), "knowledge_search", ex.getMessage(), false,
-                    Duration.between(start, Instant.now()).toMillis(), false);
+            for (String subQuery : queries) {
+                futures.add(recallWorkers.submit(() -> knowledgeBaseService.search(subQuery, Math.max(topK, 5))));
+            }
+            Map<String, SearchResult> merged = new LinkedHashMap<>();
+            for (Future<List<SearchResult>> future : futures) {
+                for (SearchResult result : future.get()) {
+                    merged.merge(result.id(), result, (left, right) -> left.score() >= right.score() ? left : right);
+                }
+            }
+            checkInterrupted();
+            SearchOutput output = rerank(query, new ArrayList<>(merged.values()), topK);
+            checkInterrupted();
+            return output;
+        } finally {
+            futures.forEach(future -> future.cancel(true));
         }
     }
 
-    public Map<String, Object> stats() {
-        return Map.of(
-                "knowledge_search", Map.of(
-                        "total", stats.total(),
-                        "success_rate", round(stats.successRate()),
-                        "avg_latency_ms", round(stats.avgLatencyMs()),
-                        "consecutive_fails", stats.consecutiveFails(),
-                        "circuit_state", breaker.state().name().toLowerCase()
-                )
-        );
-    }
+    public Map<String, Object> stats() { return executor.stats(); }
 
     private List<String> rewriteQuery(String query) {
-        String prompt = """
-                将以下用户查询改写为 3 个不同角度的知识库搜索子查询，返回 JSON 数组。
-                原始查询: "%s"
-                """.formatted(query);
+        String prompt = "将以下用户查询改写为 3 个不同角度的知识库搜索子查询，返回 JSON 数组。\n原始查询: " + query;
         try {
             String raw = llmGateway.chat("", prompt, 0.3, 256);
-            int start = raw.indexOf('[');
-            int end = raw.lastIndexOf(']');
-            List<String> rewritten = objectMapper.readValue(raw.substring(start, end + 1), new TypeReference<>() {
-            });
+            List<String> rewritten = objectMapper.readValue(jsonArray(raw), new TypeReference<>() { });
             List<String> queries = new ArrayList<>();
             queries.add(query);
-            rewritten.stream().filter(q -> q != null && !q.isBlank()).forEach(queries::add);
+            rewritten.stream().filter(q -> q != null && !q.isBlank()).limit(3).forEach(queries::add);
             return queries.stream().distinct().toList();
         } catch (Exception ex) {
             return List.of(query);
         }
     }
 
-    private List<SearchResult> rerank(String query, List<SearchResult> results, int topK) {
-        if (results.size() <= topK) {
-            return results;
-        }
-        String items = "";
+    private SearchOutput rerank(String query, List<SearchResult> results, int topK) {
+        List<SearchResult> sorted = results.stream()
+                .sorted(Comparator.comparingDouble(SearchResult::score).reversed()).toList();
+        if (results.size() <= topK) { return new SearchOutput(sorted, false); }
+        StringBuilder items = new StringBuilder();
         for (int i = 0; i < results.size(); i++) {
-            SearchResult r = results.get(i);
-            items += i + ". " + r.title() + " - " + truncate(r.content(), 180) + "\n";
+            SearchResult result = results.get(i);
+            String content = result.content() == null ? "" : result.content();
+            items.append(i).append(". ").append(result.title()).append(" - ")
+                    .append(content, 0, Math.min(content.length(), 180)).append('\n');
         }
-        String prompt = """
-                根据用户查询，对以下检索结果按相关性排序，只返回 JSON 索引数组。
-                用户查询: "%s"
-                检索结果:
-                %s
-                示例返回: [2,0,1]
-                """.formatted(query, items);
+        String prompt = "根据用户查询，对以下检索结果按相关性排序，只返回 JSON 索引数组。\n用户查询: "
+                + query + "\n检索结果:\n" + items;
         try {
             String raw = llmGateway.chat("", prompt, 0.0, 256);
-            int start = raw.indexOf('[');
-            int end = raw.lastIndexOf(']');
-            List<Integer> order = objectMapper.readValue(raw.substring(start, end + 1), new TypeReference<>() {
-            });
-            List<SearchResult> reranked = new ArrayList<>();
+            List<Integer> order = objectMapper.readValue(jsonArray(raw), new TypeReference<>() { });
+            Map<String, SearchResult> ranked = new LinkedHashMap<>();
             for (Integer index : order) {
                 if (index != null && index >= 0 && index < results.size()) {
                     SearchResult item = results.get(index);
-                    if (reranked.stream().noneMatch(existing -> existing.id().equals(item.id()))) {
-                        reranked.add(item);
-                    }
+                    ranked.putIfAbsent(item.id(), item);
                 }
             }
-            if (!reranked.isEmpty()) {
-                return reranked.stream().limit(topK).toList();
+            if (!ranked.isEmpty()) {
+                sorted.forEach(item -> ranked.putIfAbsent(item.id(), item));
+                return new SearchOutput(ranked.values().stream().limit(topK).toList(), true);
             }
         } catch (Exception ignored) {
         }
-        return results.stream().sorted(Comparator.comparingDouble(SearchResult::score).reversed()).limit(topK).toList();
+        return new SearchOutput(sorted.stream().limit(topK).toList(), false);
     }
 
-    private void validate(String query, int topK) {
-        if (query == null || query.isBlank()) {
-            throw new IllegalArgumentException("query 不能为空");
-        }
-        if (topK < 1 || topK > 50) {
-            throw new IllegalArgumentException("topK 必须在 1 到 50 之间");
-        }
+    private String jsonArray(String raw) {
+        if (raw == null) { throw new IllegalArgumentException("Empty model response"); }
+        int start = raw.indexOf('[');
+        int end = raw.lastIndexOf(']');
+        if (start < 0 || end < start) { throw new IllegalArgumentException("Missing JSON array"); }
+        return raw.substring(start, end + 1);
     }
 
-    private String truncate(String value, int max) {
-        if (value == null || value.length() <= max) {
-            return value == null ? "" : value;
-        }
-        return value.substring(0, max);
+    private void checkInterrupted() throws InterruptedException {
+        if (Thread.currentThread().isInterrupted()) { throw new InterruptedException("Knowledge search cancelled"); }
     }
 
-    private List<SearchResult> fallback(String query, String error) {
-        return List.of(new SearchResult(
-                "fallback",
-                "知识库降级结果",
-                "知识库暂时不可用，未能完成对“" + query + "”的检索。请稍后重试，或转人工客服确认。",
-                0.0,
-                0,
-                Map.of("fallback", true, "error", error == null ? "" : error)
-        ));
-    }
+    @Override
+    @PreDestroy
+    public void close() { recallWorkers.shutdownNow(); }
 
-    private double round(double value) {
-        return Math.round(value * 1000.0) / 1000.0;
-    }
-
-    private record CacheEntry(List<SearchResult> results, Instant expiresAt) {
-        boolean expired() {
-            return Instant.now().isAfter(expiresAt);
-        }
-    }
+    private record SearchOutput(List<SearchResult> results, boolean reranked) { }
 }

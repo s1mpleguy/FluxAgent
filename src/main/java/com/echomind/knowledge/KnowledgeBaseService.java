@@ -38,6 +38,7 @@ public class KnowledgeBaseService {
     private final VectorStore vectorStore;
     private final ObjectMapper objectMapper;
     private final List<KnowledgeDocument> documents = new CopyOnWriteArrayList<>();
+    private final java.util.concurrent.atomic.AtomicLong revision = new java.util.concurrent.atomic.AtomicLong();
     private final DocumentSplitter splitter = DocumentSplitters.recursive(500, 80);
 
     public KnowledgeBaseService(EchoMindProperties properties, ObjectProvider<VectorStore> vectorStoreProvider, ObjectMapper objectMapper) {
@@ -79,6 +80,7 @@ public class KnowledgeBaseService {
         }
         if (added > 0) {
             persistDocuments();
+            revision.incrementAndGet();
         }
         return added;
     }
@@ -113,6 +115,8 @@ public class KnowledgeBaseService {
     public int docCount() {
         return documents.size();
     }
+
+    public long revision() { return revision.get(); }
 
     private List<TextSegment> split(String content) {
         try {

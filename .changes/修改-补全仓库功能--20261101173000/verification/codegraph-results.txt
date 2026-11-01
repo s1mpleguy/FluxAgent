@@ -1,0 +1,15 @@
+验证日期：2026-11-01（Asia/Shanghai）
+使用工具：codegraph_index_status、codegraph_index_ensure、codegraph_explore。
+索引目录：.joycode/codegraph（JoyCode 托管索引）。
+主代理快照状态：ready / complete，pendingChanges added=0, modified=0, removed=0。
+规模：72 files，1272 nodes，2109 edges，journalMode=wal。
+Explore 核对：EchoMindController.chat -> ChatService.chat -> process -> AnswerVerifier.verify。
+ChatCli 经应用入口使用，复用 ChatService；KnowledgeToolManager 调用通用 ToolExecutor。
+新增公共服务和工具执行器已被索引，调用关系及对应测试已可查询。
+没有发现遗漏的调用方适配。
+末轮审查修复后，独立 reviewer 再次核对图谱无待同步变更；Permit 及原始累计耗时链路复核通过。
+
+提交前复核（2026-11-01）：
+工具：codegraph_index_status，projectPath=/Users/weimengkun.3/FluxAgent。
+结果：ready / complete，pendingChanges added=0, modified=0, removed=0。
+规模：72 files，1284 nodes，2155 edges；journalMode=wal，pendingRefs=0。

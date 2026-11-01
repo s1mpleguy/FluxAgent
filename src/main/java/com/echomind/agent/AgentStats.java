@@ -21,6 +21,8 @@ public class AgentStats {
         return total.get();
     }
 
+    public long totalLatencyMs() { return totalLatencyMs.get(); }
+
     public double successRate() {
         long t = total.get();
         return t == 0 ? 1.0 : (double) success.get() / t;

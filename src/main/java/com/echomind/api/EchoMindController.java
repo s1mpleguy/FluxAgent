@@ -1,23 +1,14 @@
 package com.echomind.api;
 
 import com.echomind.agent.AgentOrchestrator;
-import com.echomind.agent.AgentRequest;
-import com.echomind.agent.AgentType;
-import com.echomind.agent.AnswerVerifier;
-import com.echomind.agent.OrchestratorResult;
+import com.echomind.chat.ChatService;
 import com.echomind.api.dto.BatchDocInput;
 import com.echomind.api.dto.ChatRequest;
 import com.echomind.api.dto.ChatResponse;
 import com.echomind.api.dto.EvalRunRequest;
 import com.echomind.evaluation.EndToEndEvaluator;
-import com.echomind.intent.IntentCategory;
-import com.echomind.intent.IntentRecognizer;
-import com.echomind.intent.IntentResult;
 import com.echomind.knowledge.KnowledgeBaseService;
 import com.echomind.knowledge.SearchResult;
-import com.echomind.memory.MemoryContext;
-import com.echomind.memory.MemoryManager;
-import com.echomind.memory.MessageRole;
 import com.echomind.monitor.PerformanceMonitor;
 import com.echomind.skill.SkillManager;
 import com.echomind.tool.KnowledgeToolManager;
@@ -36,24 +27,22 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
-import java.util.UUID;
+import java.util.Locale;
 
 @RestController
 @Tag(name = "EchoMind API", description = "智能客服对话、知识库、监控和评测接口")
 public class EchoMindController {
 
     private final AgentOrchestrator orchestrator;
-    private final IntentRecognizer intentRecognizer;
-    private final MemoryManager memoryManager;
+    private final ChatService chatService;
     private final KnowledgeToolManager knowledgeToolManager;
     private final KnowledgeBaseService knowledgeBaseService;
-    private final AnswerVerifier answerVerifier;
     private final PerformanceMonitor performanceMonitor;
     private final EndToEndEvaluator evaluator;
     private final SkillManager skillManager;
@@ -62,11 +51,9 @@ public class EchoMindController {
 
     public EchoMindController(
             AgentOrchestrator orchestrator,
-            IntentRecognizer intentRecognizer,
-            MemoryManager memoryManager,
+            ChatService chatService,
             KnowledgeToolManager knowledgeToolManager,
             KnowledgeBaseService knowledgeBaseService,
-            AnswerVerifier answerVerifier,
             PerformanceMonitor performanceMonitor,
             EndToEndEvaluator evaluator,
             SkillManager skillManager,
@@ -74,11 +61,9 @@ public class EchoMindController {
             PrometheusMeterRegistry prometheusMeterRegistry
     ) {
         this.orchestrator = orchestrator;
-        this.intentRecognizer = intentRecognizer;
-        this.memoryManager = memoryManager;
+        this.chatService = chatService;
         this.knowledgeToolManager = knowledgeToolManager;
         this.knowledgeBaseService = knowledgeBaseService;
-        this.answerVerifier = answerVerifier;
         this.performanceMonitor = performanceMonitor;
         this.evaluator = evaluator;
         this.skillManager = skillManager;
@@ -95,48 +80,7 @@ public class EchoMindController {
     @PostMapping("/chat")
     @Operation(summary = "智能客服对话", description = "执行完整对话链路：记忆读取、知识库检索、意图识别、多 Agent 路由、回答校验和记忆写入。")
     public ChatResponse chat(@Valid @RequestBody ChatRequest request) {
-        String userId = request.userIdOrDefault();
-        String conversationId = request.conversationId() == null || request.conversationId().isBlank()
-                ? UUID.randomUUID().toString()
-                : request.conversationId();
-        MemoryContext memoryContext = memoryManager.getContext(userId, conversationId, request.message());
-        String memoryText = memoryContext.toPromptText(objectMapper);
-        List<Map<String, String>> history = memoryContext.recentMessages().stream()
-                .skip(Math.max(0, memoryContext.recentMessages().size() - 5))
-                .map(m -> Map.of("role", m.role().name().toLowerCase(), "content", m.content()))
-                .toList();
-        IntentResult intentResult = intentRecognizer.recognize(request.message(), history);
-        ToolResult<List<SearchResult>> knowledge = shouldUseKnowledge(intentResult.intent())
-                ? knowledgeToolManager.searchWithRewrite(request.message(), 3)
-                : new ToolResult<>(true, List.of(), "knowledge_search", null, false, 0, false);
-        String knowledgeText = buildKnowledgeContext(knowledge.data());
-        String fullContext = join(memoryText, knowledgeText);
-        OrchestratorResult result = orchestrator.run(AgentRequest.of(request.message(), userId, conversationId, fullContext, history, intentResult));
-        AnswerVerifier.VerificationResult verification = answerVerifier.verify(request.message(), result.response(), fullContext);
-        boolean escalated = result.escalated() || verification.needEscalation();
-        memoryManager.addMessage(userId, conversationId, MessageRole.USER, request.message());
-        memoryManager.addMessage(userId, conversationId, MessageRole.ASSISTANT, result.response());
-        memoryManager.updateProfile(userId, conversationId);
-        return new ChatResponse(
-                conversationId,
-                result.response(),
-                result.intent() == null ? "other" : result.intent().name().toLowerCase(),
-                intentResult.intentGroup(),
-                result.agentType().name().toLowerCase(),
-                agentNames(result.agentTypes()),
-                result.primaryAgent() == null ? null : result.primaryAgent().name().toLowerCase(Locale.ROOT),
-                agentNames(result.supportingAgents()),
-                result.routingReason(),
-                result.routingConfidence(),
-                escalated,
-                result.latencyMs(),
-                knowledge.success() && knowledge.data() != null && !knowledge.data().isEmpty(),
-                verification.pass(),
-                verification.grounded(),
-                intentResult.entities(),
-                round(intentResult.confidence(), 4),
-                intentResult.sourceScores()
-        );
+        return chatService.chat(request);
     }
 
     @PostMapping("/search")
@@ -145,7 +89,8 @@ public class EchoMindController {
             @Parameter(description = "检索关键词或用户问题", example = "退款多久能到账") @RequestParam String query,
             @Parameter(description = "返回结果数量", example = "5") @RequestParam(defaultValue = "5") int topK) {
         ToolResult<List<SearchResult>> result = knowledgeToolManager.searchWithRewrite(query, topK);
-        return Map.of("query", query, "results", result.data(), "reranked", result.reranked());
+        return Map.of("query", query, "results", result.data(), "reranked", result.reranked(),
+                "success", result.success(), "error", result.error() == null ? "" : result.error());
     }
 
     @PostMapping("/knowledge/add")
@@ -162,12 +107,17 @@ public class EchoMindController {
     @Operation(summary = "上传知识库文件", description = "支持上传 .txt、.md、.json 文件，最大 10MB。JSON 文件格式为数组：[{\"title\":\"...\",\"content\":\"...\"}]。")
     public Map<String, Object> uploadKnowledge(@Parameter(description = "知识库文件") @RequestParam("file") MultipartFile file) throws Exception {
         if (file.getSize() > 10L * 1024 * 1024) {
-            throw new IllegalArgumentException("文件大小超过 10MB 限制");
+            throw new MaxUploadSizeExceededException(10L * 1024 * 1024);
         }
         String filename = file.getOriginalFilename() == null ? "unknown" : file.getOriginalFilename();
+        String normalized = filename.toLowerCase(Locale.ROOT);
+        if (!normalized.endsWith(".txt") && !normalized.endsWith(".md") && !normalized.endsWith(".json")) {
+            throw new IllegalArgumentException("仅支持 .txt、.md、.json 文件");
+        }
         String text = new String(file.getBytes(), java.nio.charset.StandardCharsets.UTF_8);
+        if (text.isBlank()) { throw new IllegalArgumentException("文件内容不能为空"); }
         List<Map<String, String>> docs;
-        if (filename.endsWith(".json")) {
+        if (normalized.endsWith(".json")) {
             docs = parseJsonDocs(text);
         } else {
             String title = filename.contains(".") ? filename.substring(0, filename.lastIndexOf('.')) : filename;
@@ -214,80 +164,23 @@ public class EchoMindController {
         return evaluator.run(request);
     }
 
-    private boolean shouldUseKnowledge(IntentCategory intent) {
-        if (intent == null) {
-            return false;
-        }
-        return switch (intent) {
-            case QUERY,
-                    COMPLAINT,
-                    REQUEST,
-                    TECHNICAL,
-                    BILLING,
-                    ACCOUNT,
-                    ORDER_STATUS,
-                    LOGISTICS,
-                    REFUND,
-                    INVOICE,
-                    PAYMENT_ISSUE,
-                    ACCOUNT_SECURITY,
-                    TECHNICAL_LOGIN,
-                    TECHNICAL_CRASH -> true;
-            case GREETING, ESCALATION, HUMAN_HANDOFF, FEEDBACK, OTHER -> false;
-        };
-    }
-
-    private String buildKnowledgeContext(List<SearchResult> results) {
-        if (results == null || results.isEmpty()) {
-            return "";
-        }
-        List<String> parts = new ArrayList<>();
-        parts.add("[知识库检索结果]");
-        for (int i = 0; i < results.size(); i++) {
-            SearchResult item = results.get(i);
-            parts.add((i + 1) + ". 标题: " + item.title() + "\n   相关度: " + item.score() + "\n   内容: " + item.content());
-        }
-        parts.add("请优先依据以上知识库内容回答；如果知识库内容不足，再结合通用客服能力说明。");
-        return String.join("\n", parts);
-    }
-
-    private String join(String left, String right) {
-        if (left == null || left.isBlank()) {
-            return right == null ? "" : right;
-        }
-        if (right == null || right.isBlank()) {
-            return left;
-        }
-        return left + "\n\n" + right;
-    }
-
-    private List<String> agentNames(List<AgentType> agentTypes) {
-        if (agentTypes == null) {
-            return List.of();
-        }
-        return agentTypes.stream()
-                .map(agentType -> agentType.name().toLowerCase(Locale.ROOT))
-                .toList();
-    }
-
-    private double round(double value, int digits) {
-        double factor = Math.pow(10, digits);
-        return Math.round(value * factor) / factor;
-    }
-
-    @SuppressWarnings("unchecked")
     private List<Map<String, String>> parseJsonDocs(String text) throws Exception {
-        List<?> values = objectMapper.readValue(text, List.class);
+        com.fasterxml.jackson.databind.JsonNode values;
+        try {
+            values = objectMapper.readTree(text);
+        } catch (com.fasterxml.jackson.core.JsonProcessingException ex) {
+            throw new IllegalArgumentException("JSON 文档格式无效", ex);
+        }
+        if (values == null || !values.isArray() || values.isEmpty()) {
+            throw new IllegalArgumentException("JSON 文档必须是非空数组");
+        }
         List<Map<String, String>> docs = new ArrayList<>();
-        for (Object value : values) {
-            if (value instanceof Map<?, ?> map) {
-                Map<String, String> doc = new LinkedHashMap<>();
-                Object title = map.containsKey("title") ? map.get("title") : "未命名文档";
-                Object content = map.containsKey("content") ? map.get("content") : "";
-                doc.put("title", String.valueOf(title));
-                doc.put("content", String.valueOf(content));
-                docs.add(doc);
+        for (var value : values) {
+            if (!value.isObject() || !value.path("content").isTextual() || value.path("content").asText().isBlank()
+                    || (value.has("title") && (!value.get("title").isTextual() || value.get("title").asText().isBlank()))) {
+                throw new IllegalArgumentException("每条文档需要非空文本 content，title 如提供也必须为非空文本");
             }
+            docs.add(Map.of("title", value.path("title").asText("未命名文档"), "content", value.get("content").asText()));
         }
         return docs;
     }

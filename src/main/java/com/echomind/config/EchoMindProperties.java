@@ -147,6 +147,16 @@ public class EchoMindProperties {
         private double successRateThreshold = 0.90;
         private double latencyMsThreshold = 3000;
         private String webhookUrl = "";
+        private int anomalyWindowSize = 30;
+        private int anomalyMinSamples = 10;
+        private double zscoreThreshold = 3.0;
+
+        public int getAnomalyWindowSize() { return anomalyWindowSize; }
+        public void setAnomalyWindowSize(int value) { anomalyWindowSize = value; }
+        public int getAnomalyMinSamples() { return anomalyMinSamples; }
+        public void setAnomalyMinSamples(int value) { anomalyMinSamples = value; }
+        public double getZscoreThreshold() { return zscoreThreshold; }
+        public void setZscoreThreshold(double value) { zscoreThreshold = value; }
 
         public double getSuccessRateThreshold() {
             return successRateThreshold;

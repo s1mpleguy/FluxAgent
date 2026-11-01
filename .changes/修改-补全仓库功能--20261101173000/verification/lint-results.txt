@@ -1,0 +1,11 @@
+验证日期：2026-11-01（Asia/Shanghai）
+命令：git diff --check
+退出码：0，没有空白错误。
+Java 编译：随 ./mvnw -o clean verify 通过。
+仓库没有配置独立 Checkstyle/PMD/Spotless，未声称通过这些检查。
+测试日志存在 Mockito 动态 agent 提示和 Springdoc 默认启用提示，不影响测试结果。
+
+提交前检查（2026-11-01）：
+命令：git diff --cached --check，覆盖全部暂存修改及新增文件。
+首轮退出码 2：KnowledgeToolManagerTest.java 第 32 行含行尾空格。
+清理该行空格后再次检查，退出码 0，无空白错误；测试行为未改变。

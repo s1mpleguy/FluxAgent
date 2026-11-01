@@ -120,7 +120,6 @@ public class MemoryManager {
         }
         int keep = Math.min(5, messages.size());
         List<ConversationMessage> oldMessages = messages.subList(0, messages.size() - keep);
-        List<ConversationMessage> keepMessages = messages.subList(messages.size() - keep, messages.size());
         String text = oldMessages.stream()
                 .map(m -> m.role().name().toLowerCase() + ": " + m.content())
                 .reduce((a, b) -> a + "\n" + b)
@@ -138,10 +137,7 @@ public class MemoryManager {
             String oldSummary = safeRedisGet(summaryKey(userId, conversationId));
             redisTemplate.opsForValue().set(summaryKey(userId, conversationId), ((oldSummary == null ? "" : oldSummary + "\n") + summary).trim(),
                     Duration.ofSeconds(properties.getMemory().getTtlSeconds()));
-            redisTemplate.delete(key);
-            for (int i = keepMessages.size() - 1; i >= 0; i--) {
-                redisTemplate.opsForList().leftPush(key, objectMapper.writeValueAsString(keepMessages.get(i)));
-            }
+            redisTemplate.opsForList().trim(key, 0, keep - 1);
             redisTemplate.expire(key, Duration.ofSeconds(properties.getMemory().getTtlSeconds()));
         } catch (Exception ex) {
             log.warn("Memory compression failed: {}", ex.getMessage());
