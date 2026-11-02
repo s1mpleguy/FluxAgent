@@ -1,0 +1,11 @@
+检查日期：2026-11-02（Asia/Shanghai）
+范围：本次跟踪与新增文件。
+命令：git diff --check
+退出码：0；无空白错误。
+补充检查：Python 枚举 git ls-files --others --exclude-standard，逐行检查新增文件尾随空白；0 个问题，退出码 0。
+Java 编译随 ./mvnw -o clean verify 通过。
+项目未配置独立 Checkstyle/PMD/Spotless，未宣称通过这些检查。
+
+凭据检查：从被忽略的本地 .env 在内存读取密钥，检查 Git 可见文件和 Jar 应用条目，仅输出匹配的文件名及布尔结果。
+结果：0 个密钥泄露文件，0 个密钥泄露 Jar 条目；.env 模式 0600；Git 和 Docker 忽略规则有效。
+记录：/tmp/flux-dmx-credential-check-final.json。没有将密钥正文写入本记录。

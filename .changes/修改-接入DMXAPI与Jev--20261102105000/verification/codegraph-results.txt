@@ -1,0 +1,15 @@
+验证日期：2026-11-02（Asia/Shanghai）
+项目已有源码，图谱适用。使用 JoyCode 管理的 .joycode/codegraph，遵循代码图谱插件接口；没有新建传统 .codegraph 或手工伪造索引。
+工具：mcp__codegraph__codegraph_index_status(projectPath=/Users/weimengkun.3/FluxAgent)
+结果：isError=false，ready/complete；77 files、1454 nodes、2409 edges；journalMode=wal。
+pendingChanges：added=0、modified=0、removed=0；pendingRefs=0；worktreeMismatch=null。
+工具：mcp__codegraph__codegraph_explore，查询 JevIntentClient / IntentRecognizer / SpringAiLlmGateway / LlmGateway / ModelConfigurationTest。
+结果：查询成功；确认 Jev 分类接入 IntentRecognizer，并继续进入 ChatService、AgentOrchestrator 与 EndToEndEvaluator；主模型网关仍被回复、重排、校验等使用。
+回归覆盖：意图识别、模型网关、HTTP/CLI 聊天及既有后端测试。
+未解决的调用影响或图谱同步风险：无。
+
+[CODEGRAPH VERIFICATION]
+- 图谱状态：.joycode/codegraph 已存在（插件管理）
+- 同步状态：ready/complete，无 pending changes
+- 符号数量：1454 nodes，77 files，2409 edges，WAL
+→ VERIFICATION PASSED

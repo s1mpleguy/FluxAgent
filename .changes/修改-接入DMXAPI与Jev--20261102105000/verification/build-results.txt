@@ -1,0 +1,16 @@
+构建日期：2026-11-02（Asia/Shanghai）
+范围：完整 Java 21 / Maven 单模块项目。
+命令：./mvnw -o clean verify
+结束时间：2026-11-02 11:01:32 +08:00
+退出码：0
+结果：BUILD SUCCESS；42 项测试通过，无失败、错误或跳过。
+产物：target/flux-agent-0.1.0.jar（Spring Boot 可执行 Jar）。
+日志：/tmp/flux-dmx-verify-final.log。
+
+最终 Jar 已启动并完成 /health 与真实双模型 /chat 冒烟，结果通过，随后停止进程。
+配置文件默认 DMXAPI 主模型路径与 Jev 独立协议均实际验证。
+真实 API Key 未出现在 Git 可见文件或 Jar 的 BOOT-INF/classes 条目中；本地 .env 权限 0600，Git 与 Docker 构建上下文均忽略。
+未构建或运行 Docker 镜像；未提交、推送或部署。
+
+提交前复验：./mvnw -o verify，于 2026-11-02 20:13:16 +08:00 结束，退出码 0，BUILD SUCCESS。
+产物：target/flux-agent-0.1.0.jar；日志：/tmp/flux-dmx-precommit-verify.log。

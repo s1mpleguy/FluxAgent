@@ -50,7 +50,7 @@ services:
       - KNOWLEDGE_STORE_PATH=/app/data/java/knowledge-store.json
       - MEMORY_STORE_PATH=/app/data/java/memory-store.json
       - LLM_FALLBACK_ENABLED=true
-      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-anthropic}
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-deepseek}
     volumes:
       - app-data:/app/data
     depends_on:

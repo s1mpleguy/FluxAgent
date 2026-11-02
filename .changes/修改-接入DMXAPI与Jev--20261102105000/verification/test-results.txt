@@ -1,0 +1,39 @@
+验证日期：2026-11-02（Asia/Shanghai）
+范围：DMXAPI 主模型配置、Jev 意图分类、失败回退、配置导入与现有后端回归。
+
+新增/修改测试：
+src/test/java/com/echomind/intent/JevIntentClientTest.java：6 项，协议、鉴权、模型、上下文、无密钥/关闭、非法输出、HTTP 错误、请求及正文超时。
+src/test/java/com/echomind/intent/IntentRecognizerTest.java：3 项，Jev 优先、实体/紧急度/缓存兼容、既有识别兜底。
+src/test/java/com/echomind/config/ModelConfigurationTest.java：2 项，默认配置、临时 .env 加载与覆盖、工作目录 .env 零访问。
+src/test/java/com/echomind/llm/DeepSeekGatewayIntegrationTest.java：1 项，真实 Spring AI 网关调用本地 HTTP 服务，关闭兜底，校验 /v1/chat/completions、模型、鉴权、消息与 token 上限。
+src/test/java/com/echomind/api/ApiIntegrationTest.java：4 项，保留 HTTP 回归，显式关闭本地 .env 导入和 Jev 真实网络访问。
+
+RED/GREEN 证据：
+./mvnw -o -Dtest=JevIntentClientTest test：首次缺少客户端/配置符号，退出 1；实现后 5 项通过，退出 0。
+./mvnw -o -Dtest=JevIntentClientTest,IntentRecognizerTest,ModelConfigurationTest,ApiIntegrationTest test：接入前缺少识别器构造依赖；实现后 14 项通过，退出 0。
+./mvnw -o -Dtest=DeepSeekGatewayIntegrationTest test：旧默认路径 HTTP 404，退出 1；显式配置路径后 1 项通过，退出 0。
+./mvnw -o -Dtest=JevIntentClientTest test：正文延迟 1200ms、超时 250ms 时原实现仍返回有效预测，6 项中 1 项失败；完整响应截止与取消实现后 6 项通过，退出 0。
+./mvnw -o -Dtest=ModelConfigurationTest test：原配置仍访问合成 .env 两次，2 项失败；可替换导入修复后进入下述集成验证。
+./mvnw -o -Dtest=ModelConfigurationTest,ApiIntegrationTest,DeepSeekGatewayIntegrationTest test：7 项通过，退出 0。
+
+最终命令：./mvnw -o clean verify
+结束时间：2026-11-02 11:01:32 +08:00
+退出码：0
+Tests run: 42, Failures: 0, Errors: 0, Skipped: 0
+BUILD SUCCESS
+原始日志：/tmp/flux-dmx-verify-final.log
+
+真实服务与最终 Jar 验证：
+合成消息调用 DMXAPI /v1/chat/completions，HTTP 200，返回模型 DeepSeek-V4.1-Flash-261017，非空内容。
+合成退款消息调用 /typesafe/v1/systemone，HTTP 200，jev-latest 返回 jev-1.14.0，choice=refund，confidence=1。
+最终 Jar：本地临时端口和临时存储，加载真实本地 .env，向 /chat 发送合成问候“你好”。
+/health=200；/chat=200；intent=greeting；intent_source_scores={jev:1.0}；非空回复；verified=true；latency_ms=7021。
+没有主模型降级日志；结果通过；临时应用进程已停止。
+记录：/tmp/flux-dmx-app-result-final.json、/tmp/flux-dmx-app-smoke-final.log。
+
+边界：真实冒烟仅验证连通性和调用链，不代表中文业务分类准确率或负载验收。未运行 Docker 或真实 Redis 服务；本轮 Redis 不可用回退在临时环境下执行。无未解决测试失败。
+
+提交前复验（2026-11-02）：./mvnw -o verify
+结束时间：20:13:16 +08:00；退出码：0。
+Tests run: 42, Failures: 0, Errors: 0, Skipped: 0；BUILD SUCCESS。
+日志：/tmp/flux-dmx-precommit-verify.log。没有重复发起付费服务冒烟，真实调用证据沿用上述已验证实现。

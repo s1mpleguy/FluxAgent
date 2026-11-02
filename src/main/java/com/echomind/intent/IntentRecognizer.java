@@ -79,11 +79,13 @@ public class IntentRecognizer {
 
     private final LlmGateway llmGateway;
     private final ObjectMapper objectMapper;
+    private final JevIntentClient jevIntentClient;
     private final Map<String, IntentResult> cache = new ConcurrentHashMap<>();
 
-    public IntentRecognizer(LlmGateway llmGateway, ObjectMapper objectMapper) {
+    public IntentRecognizer(LlmGateway llmGateway, ObjectMapper objectMapper, JevIntentClient jevIntentClient) {
         this.llmGateway = llmGateway;
         this.objectMapper = objectMapper;
+        this.jevIntentClient = jevIntentClient;
     }
 
     public IntentResult recognize(String message, List<Map<String, String>> history) {
@@ -93,10 +95,18 @@ public class IntentRecognizer {
             return cached;
         }
         Instant start = Instant.now();
-        Map<String, Object> llm = llmRecognize(message, history);
-        Map<String, Object> semantic = semanticRecognize(message);
-        Map<String, Object> pattern = patternRecognize(message);
-        VoteResult vote = vote(llm, semantic, pattern);
+        var jev = jevIntentClient.classify(message, history);
+        VoteResult vote;
+        String reasoning;
+        if (jev.isPresent()) {
+            var prediction = jev.get();
+            vote = new VoteResult(prediction.intent(), prediction.confidence(), Map.of("jev", prediction.confidence()));
+            reasoning = "Jev 分类：" + prediction.intent().name().toLowerCase(Locale.ROOT);
+        } else {
+            Map<String, Object> llm = llmRecognize(message, history);
+            vote = vote(llm, semanticRecognize(message), patternRecognize(message));
+            reasoning = String.valueOf(llm.getOrDefault("reasoning", ""));
+        }
         IntentCategory intent = vote.intent();
         UrgencyLevel urgency = urgency(message, intent);
         IntentResult result = new IntentResult(
@@ -105,7 +115,7 @@ public class IntentRecognizer {
                 urgency,
                 intentGroup(intent),
                 extractEntities(message),
-                String.valueOf(llm.getOrDefault("reasoning", "")),
+                reasoning,
                 Duration.between(start, Instant.now()).toMillis(),
                 vote.sourceScores()
         );

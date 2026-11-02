@@ -1,5 +1,17 @@
 # 修改日志
 
+## 2026-11-02 — DMXAPI 与 Jev 模型接入
+
+- 默认模型 profile 改为 DeepSeek，服务地址为 `https://www.dmxapi.cn`，主模型为 `deepseek-v4.1-flash-1017`。
+- 显式配置主模型请求路径 `/v1/chat/completions`，修复 Spring AI 默认路径与 DMXAPI 不兼容导致的模型降级；新增真实 Spring AI 客户端对本地 HTTP 服务的回归测试。
+- 新增 Jev 意图分类客户端，模型为 `jev-latest`，使用独立 `/typesafe/v1/systemone` 接口；返回合法且达到置信度门槛时使用分类结果，超时、异常或低置信度时回退原有识别逻辑。
+- 支持从工作目录自动加载本地 `.env`，两个模型默认共用 `DMX_API_KEY`；真实密钥不写入版本库或镜像。同步配置示例、Compose 和使用说明。
+- 新增 Jev 协议及降级、识别器集成、模型配置加载测试，现有 HTTP 集成测试隔离本地凭据与真实 Jev 请求。
+- Jev 的超时覆盖完整响应体读取，超时后取消请求并回退；新增响应头已到达但正文停滞的回归测试。
+- 通过 `ECHOMIND_ENV_FILE` 控制本地配置导入，修复仅清空 `spring.config.import` 仍会加载 `.env` 的测试隔离问题。
+- 验证：`./mvnw -o clean verify` 于 2026-11-02 11:01:32（Asia/Shanghai）成功，42 项测试全部通过；最终 Jar 的真实 `/chat` 请求同时使用主模型和 Jev，HTTP 200、`intent_source_scores.jev=1.0`，无主模型降级。独立复审未发现新的待修复问题。
+- 提交前复验：`./mvnw -o verify` 于 2026-11-02 20:13:16（Asia/Shanghai）成功，42 项测试全部通过。
+
 ## 2026-11-01 — 后端能力补全与稳定性修复
 
 ### 新增

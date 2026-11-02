@@ -30,7 +30,7 @@ public class SpringAiLlmGateway implements LlmGateway {
 
     public SpringAiLlmGateway(ObjectProvider<ChatModel> chatModelProvider,
                               EchoMindProperties properties,
-                              @Value("${spring.profiles.active:anthropic}") String activeProfile,
+                              @Value("${spring.profiles.active:deepseek}") String activeProfile,
                               @Value("${spring.ai.anthropic.api-key:}") String anthropicApiKey,
                               @Value("${spring.ai.deepseek.api-key:}") String deepSeekApiKey) {
         this.chatModel = chatModelProvider.getIfAvailable();

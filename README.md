@@ -15,7 +15,7 @@ FluxAgent 是一个面向企业客服场景的多 Agent 编排平台，当前实
 | 语言 | Java 21 |
 | Web 框架 | Spring Boot 3.5 |
 | AI 框架 | Spring AI 1.1 |
-| LLM Provider | Anthropic、DeepSeek |
+| LLM Provider | 默认 DMXAPI DeepSeek，兼容 Anthropic；Jev 负责意图判断 |
 | 文档处理 | LangChain4j DocumentSplitter |
 | 记忆缓存 | Spring Data Redis |
 | RAG | BM25 + 本地 hash vector + LLM rerank |
@@ -30,8 +30,9 @@ FluxAgent 是一个面向企业客服场景的多 Agent 编排平台，当前实
 ```text
 POST /chat
   -> MemoryManager 读取 Redis 工作记忆、会话摘要、长期记忆、用户画像
+  -> IntentRecognizer 优先使用 Jev，失败或低置信度时回退 LLM / 规则
   -> KnowledgeToolManager 做查询改写、并行召回、LLM rerank
-  -> AgentOrchestrator 做意图识别和 Agent 路由
+  -> AgentOrchestrator 根据意图做 Agent 路由
   -> General / Technical / Billing Agent 生成回复
   -> AnswerVerifier 校验回复是否可信、是否需要转人工
   -> 写入 Redis，并异步更新用户画像
@@ -57,7 +58,7 @@ POST /chat
 | Agent 类型 | General / Technical / Billing | General / Technical / Billing | 已对齐 |
 | Agent 路由 | 意图路由 + 性能路由 + 降级 | 意图路由 + 性能路由 + 降级 | 已对齐 |
 | 复合问题并行处理 | 支持 | 支持 | 已对齐 |
-| 意图识别 | LLM + embedding/hash + pattern | LLM + char n-gram semantic + pattern | 基本对齐 |
+| 意图识别 | LLM + embedding/hash + pattern | Jev 优先，LLM + char n-gram semantic + pattern 兜底 | 支持独立决策模型 |
 | 工作记忆 | Redis | Redis | 已对齐 |
 | 情景记忆 | ChromaDB `episodic` collection | JSON 持久化 + 本地向量检索 | 功能对齐，存储不同 |
 | 用户画像 | ChromaDB `user_profile` collection | JSON 持久化 | 功能对齐，存储不同 |
@@ -76,14 +77,25 @@ POST /chat
 
 ### DeepSeek 兼容
 
-Java 版通过 Spring profile 切换模型：
+默认通过 DMXAPI 调用 DeepSeek。将 `.env.example` 复制为 `.env` 后填写密钥（已有 `.env` 时直接编辑）：
 
 ```env
 SPRING_PROFILES_ACTIVE=deepseek
-DEEPSEEK_API_KEY=your_key
-DEEPSEEK_BASE_URL=https://api.deepseek.com
-DEEPSEEK_MODEL=deepseek-chat
+DMX_API_KEY=your_key
+DEEPSEEK_BASE_URL=https://www.dmxapi.cn
+DEEPSEEK_MODEL=deepseek-v4.1-flash-1017
+JEV_ENABLED=true
+JEV_BASE_URL=https://www.dmxapi.cn
+JEV_MODEL=jev-latest
 ```
+
+从项目根目录运行 Maven 或 Jar 时自动读取 `.env`；进程环境变量和命令行参数可以覆盖。Compose 使用 `env_file` 注入。`.env` 被 Git 和 Docker 构建上下文忽略，真实密钥不能写入源码或 `.env.example`。
+
+自动化测试设置 `ECHOMIND_ENV_FILE=` 关闭本地配置导入；也可将该变量设为 `optional:file:/指定路径/.env[.properties]` 使用其他配置文件。
+
+主模型与 Jev 默认共用 `DMX_API_KEY`，也可分别设置 `DEEPSEEK_API_KEY`、`JEV_API_KEY`。主模型使用 `/v1/chat/completions`（通过 `DEEPSEEK_COMPLETIONS_PATH` 可覆盖），Jev 使用独立的 `/typesafe/v1/systemone`，不需要给 Base URL 添加这些路径。
+
+`JevIntentClient` 根据当前消息和最近对话执行 Choice 分类；高置信度结果直接进入现有路由，并在 `intent_source_scores` 中标识 `jev`。关闭 Jev、缺少密钥、请求失败、响应无效或置信度不足时，使用原有识别逻辑。可配置 `JEV_TIMEOUT`（默认 `8s`）及 `JEV_MIN_CONFIDENCE`（默认 `0.7`，是待业务样本校准的初始值）。`IntentResult.reasoning` 为程序生成的分类说明，不是 Jev 的推理文本。检索重排、回答校验和评测继续使用主模型。
 
 当前还做了启动容错：缺少真实 API Key 时使用 `echomind-local-placeholder` 避免 Spring AI 自动配置阶段直接失败。真实调用时如果没有配置真实 key，并且：
 
@@ -341,7 +353,7 @@ DeepSeek 启动：
 ```bash
 export REDIS_PORT=6380
 export SPRING_PROFILES_ACTIVE=deepseek
-export DEEPSEEK_API_KEY=your_key
+# 在项目根目录的 .env 中填写 DMX_API_KEY
 ./mvnw spring-boot:run
 ```
 
@@ -379,7 +391,7 @@ DeepSeek 启动：
 ```powershell
 $env:REDIS_PORT="6380"
 $env:SPRING_PROFILES_ACTIVE="deepseek"
-$env:DEEPSEEK_API_KEY="your_key"
+# 在项目根目录的 .env 中填写 DMX_API_KEY
 .\mvnw.cmd spring-boot:run
 ```
 
@@ -535,4 +547,4 @@ curl -X POST http://localhost:8080/eval/run \
 
 `/search` 返回 `success` 和 `error`，用于区分无结果与检索降级。非法参数返回 HTTP 400，超出上传限制返回 HTTP 413；文件仅允许 `.txt`、`.md`、`.json`（扩展名大小写不敏感），最大 10MB。
 
-镜像已包含 `skills/` 及健康检查所需的 curl。通过 Compose 启动时 `.env` 会被加载；直接运行 Java/Maven 时需自行导出环境变量。
+镜像已包含 `skills/` 及健康检查所需的 curl。Compose 加载 `.env`；直接运行 Java/Maven 时会可选读取当前工作目录的 `.env`，也支持导出环境变量。
