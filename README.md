@@ -40,11 +40,11 @@ POST /chat
 
 相关实现：
 
-- `src/main/java/com/echomind/api/EchoMindController.java`
-- `src/main/java/com/echomind/memory/MemoryManager.java`
-- `src/main/java/com/echomind/tool/KnowledgeToolManager.java`
-- `src/main/java/com/echomind/agent/AgentOrchestrator.java`
-- `src/main/java/com/echomind/agent/AnswerVerifier.java`
+- `src/main/java/com/fluxagent/api/FluxAgentController.java`
+- `src/main/java/com/fluxagent/memory/MemoryManager.java`
+- `src/main/java/com/fluxagent/tool/KnowledgeToolManager.java`
+- `src/main/java/com/fluxagent/agent/AgentOrchestrator.java`
+- `src/main/java/com/fluxagent/agent/AnswerVerifier.java`
 
 ## Python 与 Java 版本对照
 
@@ -180,9 +180,9 @@ Java 版已经实现：
 
 相关实现：
 
-- `src/main/java/com/echomind/evaluation/EndToEndEvaluator.java`
-- `src/main/java/com/echomind/evaluation/LLMJudge.java`
-- `src/main/java/com/echomind/monitor/PerformanceMonitor.java`
+- `src/main/java/com/fluxagent/evaluation/EndToEndEvaluator.java`
+- `src/main/java/com/fluxagent/evaluation/LLMJudge.java`
+- `src/main/java/com/fluxagent/monitor/PerformanceMonitor.java`
 
 ### Swagger / OpenAPI
 
@@ -198,9 +198,9 @@ Java 版现在通过 Springdoc OpenAPI 提供同名入口：
 
 - `pom.xml`
 - `src/main/resources/application.yml`
-- `src/main/java/com/echomind/config/OpenApiConfig.java`
-- `src/main/java/com/echomind/api/SwaggerDocsController.java`
-- `src/main/java/com/echomind/api/EchoMindController.java`
+- `src/main/java/com/fluxagent/config/OpenApiConfig.java`
+- `src/main/java/com/fluxagent/api/SwaggerDocsController.java`
+- `src/main/java/com/fluxagent/api/FluxAgentController.java`
 
 `/docs` 页面会从 jsdelivr CDN 加载 Swagger UI 静态资源；如果部署在不能访问外网的环境，需要把 Swagger UI 静态资源放到项目本地。
 
@@ -421,13 +421,13 @@ http://localhost:8080/docs
 复制配置：
 
 ```bash
-cp .env.example .env
+test -f .env || cp .env.example .env
 ```
 
 Windows PowerShell：
 
 ```powershell
-Copy-Item .env.example .env
+if (-not (Test-Path .env)) { Copy-Item .env.example .env }
 ```
 
 编辑 `.env`，选择模型 profile 并填写对应 API Key。
@@ -538,6 +538,8 @@ curl -X POST http://localhost:8080/eval/run \
 
 
 ## 开发验证
+
+完整的操作步骤、预期结果和真实模型验收方法见 [功能测试指南](docs/功能测试指南.md)，覆盖 Swagger、聊天、知识库、Redis 多轮记忆、CLI、Skills、监控和评测。
 
 ```bash
 ./mvnw clean verify

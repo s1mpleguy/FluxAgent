@@ -1,0 +1,14 @@
+核对时间：2026-11-03T16:01:37+08:00
+实际索引：.joycode/codegraph，由 JoyCode CodeGraph MCP 管理；未使用旧 .codegraph CLI。
+调用：codegraph_index_status(projectPath=当前项目)
+结果：isError=false；ready / complete；77 files，1454 nodes，2408 edges；journalMode=wal。
+pendingChanges：added=0，modified=0，removed=0；pendingRefs=0。
+调用：codegraph_explore(query="FluxAgentApplication FluxAgentController FluxAgentProperties fluxAgentOpenAPI", maxFiles=4)
+结果：isError=false；找到新符号，FluxAgentProperties 有 29 个调用/引用，业务和测试引用均位于 com/fluxagent；应用入口与 OpenAPI Bean 均可查到。
+配置类的评测、Jev、知识库、模型网关、记忆、监控、Skills 及测试调用路径已同步。
+结论：未发现遗留旧 Java 符号或未解决调用影响；Jar manifest 和完整编译/测试进一步验证入口与依赖。
+[CODEGRAPH VERIFICATION]
+- 图谱状态：.joycode/codegraph 已存在，ready/complete
+- 同步状态：无待处理变更及 pendingRefs
+- 符号数量：1454 nodes，77 files，2408 edges，WAL
+- VERIFICATION PASSED

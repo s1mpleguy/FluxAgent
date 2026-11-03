@@ -1,0 +1,21 @@
+Command: ./mvnw -o -Dtest=ApiIntegrationTest,ModelConfigurationTest,DeepSeekGatewayIntegrationTest test
+Exit: 1
+Expected failure after migrating only existing tests: new production packages/classes not found.
+[ERROR] COMPILATION ERROR :
+[ERROR] src/test/java/com/fluxagent/api/ApiIntegrationTest.java:[3,25] 找不到符号
+[ERROR] src/test/java/com/fluxagent/api/ApiIntegrationTest.java:[4,28] 找不到符号
+[ERROR] src/test/java/com/fluxagent/api/ApiIntegrationTest.java:[5,28] 找不到符号
+[ERROR] src/test/java/com/fluxagent/api/ApiIntegrationTest.java:[35,18] 找不到符号
+[ERROR] src/test/java/com/fluxagent/api/ApiIntegrationTest.java:[36,18] 找不到符号
+[ERROR] src/test/java/com/fluxagent/chat/ChatServiceTest.java:[4,29] 程序包com.fluxagent.api.dto不存在
+[ERROR] src/test/java/com/fluxagent/chat/ChatServiceTest.java:[21,19] 找不到符号
+[ERROR] src/test/java/com/fluxagent/chat/ChatServiceTest.java:[22,19] 找不到符号
+[ERROR] src/test/java/com/fluxagent/chat/ChatServiceTest.java:[23,19] 找不到符号
+[ERROR] src/test/java/com/fluxagent/chat/ChatServiceTest.java:[24,19] 找不到符号
+[ERROR] src/test/java/com/fluxagent/chat/ChatServiceTest.java:[25,19] 找不到符号
+[ERROR] src/test/java/com/fluxagent/chat/ChatServiceTest.java:[27,19] 找不到符号
+[ERROR] src/test/java/com/fluxagent/chat/ChatServiceTest.java:[3,1] 程序包com.fluxagent.agent不存在
+[ERROR] src/test/java/com/fluxagent/cli/ChatCliTest.java:[3,26] 找不到符号
+[ERROR] src/test/java/com/fluxagent/cli/ChatCliTest.java:[4,29] 程序包com.fluxagent.api.dto不存在
+[ERROR] src/test/java/com/fluxagent/cli/ChatCliTest.java:[5,29] 程序包com.fluxagent.api.dto不存在
+[ERROR] src/test/java/com/fluxagent/cli/ChatCliTest.java:[20,19] 找不到符号

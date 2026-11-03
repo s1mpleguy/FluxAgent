@@ -1,0 +1,14 @@
+核对时间：2026-11-03T16:01:37+08:00
+命令：./mvnw -o clean verify
+退出码：0
+完成时间：2026-11-03T15:56:19+08:00
+结果：BUILD SUCCESS，Maven groupId 为 com.fluxagent。
+产物：target/flux-agent-0.1.0.jar
+Jar 清单：Start-Class: com.fluxagent.FluxAgentApplication
+类目录：BOOT-INF/classes/com/fluxagent/；包含 FluxAgentApplication、api/FluxAgentController、config/FluxAgentProperties。
+Jar 未包含旧 com/echomind 业务目录或 EchoMind 类名。
+打包产物以 HTTP 与 --cli 两种方式启动成功，CLI 退出码 0 且不启动 HTTP 监听。
+构建后仅修改当前文档和三份外部 Skills 的项目展示名称；最终 Skills 内容已纳入 Jar 运行时加载/reload 冒烟。
+未执行 Docker 镜像构建：本机未安装 Docker。
+
+提交前复验：./mvnw -o verify，退出码 0，完成时间 2026-11-03T16:04:06+08:00；BUILD SUCCESS，42 项测试通过，无失败、错误或跳过。复验后仅补充 Git 授权与验证记录，没有修改业务代码或配置。

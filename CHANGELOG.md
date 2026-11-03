@@ -1,5 +1,15 @@
 # 修改日志
 
+## 2026-11-03 — 统一 FluxAgent 命名与功能测试说明
+
+- Java 业务包和测试包迁移到 `com.fluxagent`，Maven groupId 与可执行 Jar 的启动入口同步更新。
+- 将 `EchoMindJavaApplication`、`EchoMindController`、`EchoMindProperties` 分别更名为 `FluxAgentApplication`、`FluxAgentController`、`FluxAgentProperties`；同步 OpenAPI Bean/接口分组及客服、Skills 提示词中的项目名。
+- 保留 `echomind.*` 配置、`ECHOMIND_*` 环境变量、已有 Redis 键、存储元数据、监控指标和 Compose 服务名称，兼容已有部署与数据。
+- 新增 `docs/功能测试指南.md`，提供自动化回归及 Swagger、聊天、知识库、多轮记忆、CLI、Skills、监控、评测的操作和预期结果，说明本地兜底与真实模型验收的区别。
+- 同步 README 源码路径和工程结构，配置复制示例保护已有 `.env`。
+- 验证：`./mvnw -o clean verify` 于 2026-11-03 15:56:19（Asia/Shanghai）成功，42 项测试全部通过；最终 Jar 的 20 项 HTTP/CLI 冒烟通过。本轮未调用在线模型，未运行真实 Redis 或 Docker。
+- 提交前复验：`./mvnw -o verify` 于 2026-11-03T16:04:06+08:00 成功，42 项测试全部通过。
+
 ## 2026-11-02 — DMXAPI 与 Jev 模型接入
 
 - 默认模型 profile 改为 DeepSeek，服务地址为 `https://www.dmxapi.cn`，主模型为 `deepseek-v4.1-flash-1017`。

@@ -1,0 +1,51 @@
+核对时间：2026-11-03T16:01:37+08:00
+范围：com.fluxagent 包迁移后原有行为回归，以及可执行 Jar 的 HTTP/CLI 冒烟。
+命令：./mvnw -o clean verify
+退出码：0
+完成时间：2026-11-03T15:56:19+08:00
+结果：42 tests, 0 failures, 0 errors, 0 skipped；沿用现有测试，无新增仅断言更名的测试。
+迁移的测试文件：
+src/test/java/com/fluxagent/api/ApiIntegrationTest.java: tests=4, failures=0, errors=0, skipped=0
+src/test/java/com/fluxagent/chat/ChatServiceTest.java: tests=3, failures=0, errors=0, skipped=0
+src/test/java/com/fluxagent/cli/ChatCliTest.java: tests=3, failures=0, errors=0, skipped=0
+src/test/java/com/fluxagent/config/ModelConfigurationTest.java: tests=2, failures=0, errors=0, skipped=0
+src/test/java/com/fluxagent/intent/IntentRecognizerTest.java: tests=3, failures=0, errors=0, skipped=0
+src/test/java/com/fluxagent/intent/JevIntentClientTest.java: tests=6, failures=0, errors=0, skipped=0
+src/test/java/com/fluxagent/llm/DeepSeekGatewayIntegrationTest.java: tests=1, failures=0, errors=0, skipped=0
+src/test/java/com/fluxagent/memory/MemoryManagerTest.java: tests=1, failures=0, errors=0, skipped=0
+src/test/java/com/fluxagent/monitor/PerformanceMonitorTest.java: tests=6, failures=0, errors=0, skipped=0
+src/test/java/com/fluxagent/tool/CircuitBreakerTest.java: tests=1, failures=0, errors=0, skipped=0
+src/test/java/com/fluxagent/tool/KnowledgeToolManagerTest.java: tests=4, failures=0, errors=0, skipped=0
+src/test/java/com/fluxagent/tool/ToolExecutorTest.java: tests=8, failures=0, errors=0, skipped=0
+
+RED：先仅迁移测试引用，原生产包无法满足编译；失败摘录见 red.txt。随后迁移生产代码，完整回归变绿。
+Jar 冒烟命令：python3 /tmp/flux-rename-smoke.py
+退出码：0；20 项检查通过。
+执行方式：临时数据目录、随机 HTTP 端口；禁用 .env 导入、Jev，模型为占位配置，Redis 指向本机不可用端口；终止自启服务并清理临时数据。
+首轮临时脚本错误地按“本地降级”固定子串判定兜底，因兜底话术存在分支而失败。日志已显示 No real API key configured；脚本改为检查网关降级日志及意图来源后通过，生产逻辑未因此修改。
+PASS: Jar entry uses com.fluxagent.FluxAgentApplication
+PASS: Jar contains renamed application/controller/properties
+PASS: Jar has no old business package/classes
+PASS: Packaged HTTP application starts
+PASS: Health responds
+PASS: Docs page uses FluxAgent title
+PASS: OpenAPI title and chat tag renamed
+PASS: Knowledge add and stats
+PASS: Encoded knowledge search finds inserted content
+PASS: Knowledge txt upload
+PASS: Chat contract and conversation ID
+PASS: Smoke explicitly uses fallback without live model
+PASS: Invalid chat/search/upload return 400
+PASS: Skills summary and reload work
+PASS: Monitor exposes alert state
+PASS: Metrics keep compatible names
+PASS: Evaluation endpoint and isolated baseline
+PASS: Knowledge persisted to isolated file
+PASS: Packaged CLI replies, switches session and exits
+PASS: CLI does not start HTTP listener
+Live model, Redis service and Docker were not exercised.
+
+未执行：真实 Redis、Docker、在线模型质量验收；本机未安装 Docker/Redis，此次验证不使用付费模型。具体手工步骤见 docs/功能测试指南.md。
+评测冒烟只使用空用例验证入口和独立基线落盘，不表示真实模型评分通过。
+
+提交前复验：./mvnw -o verify，退出码 0，完成时间 2026-11-03T16:04:06+08:00；BUILD SUCCESS，42 项测试通过，无失败、错误或跳过。复验后仅补充 Git 授权与验证记录，没有修改业务代码或配置。

@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.echomind</groupId>
+    <groupId>com.fluxagent</groupId>
     <artifactId>flux-agent</artifactId>
     <version>0.1.0</version>
     <name>FluxAgent</name>
@@ -111,7 +111,7 @@
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <version>${spring-boot.version}</version>
                 <configuration>
-                    <mainClass>com.echomind.EchoMindJavaApplication</mainClass>
+                    <mainClass>com.fluxagent.FluxAgentApplication</mainClass>
                 </configuration>
                 <executions>
                     <execution>
