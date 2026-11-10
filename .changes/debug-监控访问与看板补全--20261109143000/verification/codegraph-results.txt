@@ -1,0 +1,6 @@
+2026-11-09 CodeGraph MCP index_status: ready; 84 files, 1535 nodes, 2571 edges; pending added/modified/removed=0; pendingRefs=0.
+codegraph_explore: RuntimeMetrics.update -> PerformanceMonitor.collectMetrics; ToolStats.recordCacheHit -> ToolExecutor; caller tests PerformanceMonitorTest / ToolExecutorTest. New symbols are indexed; no public existing signature changed. Paths: src/main/java/com/fluxagent/{monitor,tool}; src/test/java/com/fluxagent/{monitor,tool}.
+Final 2026-11-09 14:37:25 CST: ready; 84 files, 1542 nodes, 2595 edges; pending added/modified/removed=0, pendingRefs=0.
+
+[CODEGRAPH VERIFICATION]
+2026-11-10 提交前 codegraph_index_status：.joycode/codegraph ready，84 files / 1542 nodes / 2595 edges，journal=wal，pending added/modified/removed=0，pendingRefs=0。VERIFICATION PASSED。

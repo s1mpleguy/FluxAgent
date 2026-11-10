@@ -1,0 +1,26 @@
+test_check_verifies_queries_through_grafana_datasource (test_monitoring.MonitoringTest.test_check_verifies_queries_through_grafana_datasource) ... ok
+test_local_config_scrapes_host_application_and_has_alert_rules (test_monitoring.MonitoringTest.test_local_config_scrapes_host_application_and_has_alert_rules) ... ok
+test_malformed_or_dead_state_is_safe (test_monitoring.MonitoringTest.test_malformed_or_dead_state_is_safe) ... ok
+test_managed_process_can_be_identified_and_stopped (test_monitoring.MonitoringTest.test_managed_process_can_be_identified_and_stopped) ... ok
+test_occupied_port_is_reported_without_terminating_listener (test_monitoring.MonitoringTest.test_occupied_port_is_reported_without_terminating_listener) ... ok
+test_port_can_be_reused_after_server_actively_closes_connection (test_monitoring.MonitoringTest.test_port_can_be_reused_after_server_actively_closes_connection) ... ok
+test_stale_pid_cannot_stop_unrelated_process (test_monitoring.MonitoringTest.test_stale_pid_cannot_stop_unrelated_process) ... ok
+test_target_validation_rejects_urls_and_configuration_injection (test_monitoring.MonitoringTest.test_target_validation_rejects_urls_and_configuration_injection) ... ok
+test_termination_during_startup_reaps_child (test_monitoring.MonitoringTest.test_termination_during_startup_reaps_child) ... ok
+
+----------------------------------------------------------------------
+Ran 9 tests in 0.175s
+
+OK
+prometheus: 页面健康，由当前项目管理
+grafana: 页面健康，由当前项目管理
+FluxAgent 指标采集: up
+FluxAgent Grafana 看板: 已加载
+Grafana → Prometheus → FluxAgent: 查询成功
+prometheus: 页面健康，由当前项目管理
+grafana: 页面健康，由当前项目管理
+FluxAgent 指标采集: up
+FluxAgent Grafana 看板: 已加载
+链路检查失败: Grafana 数据源无法查询到健康的 FluxAgent 实例
+prometheus 已停止
+test 已停止

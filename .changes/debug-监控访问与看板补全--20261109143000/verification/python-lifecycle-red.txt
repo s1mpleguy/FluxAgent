@@ -1,0 +1,43 @@
+test_local_config_scrapes_host_application_and_has_alert_rules (test_monitoring.MonitoringTest.test_local_config_scrapes_host_application_and_has_alert_rules) ... ok
+test_malformed_or_dead_state_is_safe (test_monitoring.MonitoringTest.test_malformed_or_dead_state_is_safe) ... ok
+test_managed_process_can_be_identified_and_stopped (test_monitoring.MonitoringTest.test_managed_process_can_be_identified_and_stopped) ... ok
+test_occupied_port_is_reported_without_terminating_listener (test_monitoring.MonitoringTest.test_occupied_port_is_reported_without_terminating_listener) ... ok
+test_port_can_be_reused_after_server_actively_closes_connection (test_monitoring.MonitoringTest.test_port_can_be_reused_after_server_actively_closes_connection) ... ERROR
+test_stale_pid_cannot_stop_unrelated_process (test_monitoring.MonitoringTest.test_stale_pid_cannot_stop_unrelated_process) ... ok
+test_target_validation_rejects_urls_and_configuration_injection (test_monitoring.MonitoringTest.test_target_validation_rejects_urls_and_configuration_injection) ... ok
+test_termination_during_startup_reaps_child (test_monitoring.MonitoringTest.test_termination_during_startup_reaps_child) ... FAIL
+
+======================================================================
+ERROR: test_port_can_be_reused_after_server_actively_closes_connection (test_monitoring.MonitoringTest.test_port_can_be_reused_after_server_actively_closes_connection)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/weimengkun.3/FluxAgent/scripts/monitoring.py", line 86, in require_free_port
+    probe.bind(("127.0.0.1", port))
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+OSError: [Errno 48] Address already in use
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/weimengkun.3/FluxAgent/scripts/tests/test_monitoring.py", line 30, in test_port_can_be_reused_after_server_actively_closes_connection
+    monitoring.require_free_port(port)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/Users/weimengkun.3/FluxAgent/scripts/monitoring.py", line 88, in require_free_port
+    raise RuntimeError(f"端口 {port} 已被占用；请检查已有服务，本脚本不会终止无关进程") from error
+RuntimeError: 端口 62904 已被占用；请检查已有服务，本脚本不会终止无关进程
+
+======================================================================
+FAIL: test_termination_during_startup_reaps_child (test_monitoring.MonitoringTest.test_termination_during_startup_reaps_child)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/weimengkun.3/FluxAgent/scripts/tests/test_monitoring.py", line 61, in test_termination_during_startup_reaps_child
+    self.assertEqual(manager.returncode, 128 + signal.SIGTERM, manager.stderr)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: -15 != 143 :
+
+----------------------------------------------------------------------
+Ran 8 tests in 0.207s
+
+FAILED (failures=1, errors=1)
+prometheus 已停止
+test 已停止

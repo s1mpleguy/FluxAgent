@@ -6,6 +6,7 @@ public class ToolStats {
     private long success;
     private long failed;
     private long totalLatencyMs;
+    private long cacheHits;
     private int consecutiveFails;
 
     public synchronized void record(boolean ok, long latencyMs) {
@@ -24,6 +25,11 @@ public class ToolStats {
         return total;
     }
 
+    public synchronized void recordCacheHit(long latencyMs) {
+        record(true, latencyMs);
+        cacheHits++;
+    }
+
     public synchronized double successRate() {
         return total == 0 ? 1.0 : (double) success / total;
     }
@@ -38,6 +44,7 @@ public class ToolStats {
 
     public synchronized java.util.Map<String, Object> snapshot() {
         return java.util.Map.of("total", total, "success_rate", successRate(),
-                "avg_latency_ms", avgLatencyMs(), "consecutive_fails", consecutiveFails);
+                "avg_latency_ms", avgLatencyMs(), "consecutive_fails", consecutiveFails,
+                "cache_hits", cacheHits, "cache_hit_rate", total == 0 ? 0.0 : (double) cacheHits / total);
     }
 }

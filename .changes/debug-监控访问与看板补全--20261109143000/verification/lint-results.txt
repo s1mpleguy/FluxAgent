@@ -1,0 +1,8 @@
+git diff --check: passed.
+python3 -m py_compile scripts/monitoring.py scripts/tests/test_monitoring.py: passed.
+Dashboard JSON parse: passed.
+Ruby YAML parser: docker-compose.yml, config/prometheus.yml, config/prometheus-alerts.yml, config/prometheus-alerts.test.yml, both Grafana provisioning files: passed.
+No additional repository lint task configured. Docker Compose runtime not verified.
+
+2026-11-10 提交前复验：git diff --check、Python py_compile、全部本次 YAML 配置解析、22 面板 JSON 解析均通过。待提交文件检查未发现密钥模式；data/、.env 和构建产物不入库。
+暂存后格式检查发现历史测试日志尾随空格，已仅清理行尾空白；测试输出内容与结论保留。git diff --cached --check 复查通过。

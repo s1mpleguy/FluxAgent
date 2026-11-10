@@ -1,0 +1,9 @@
+2026-11-09 Asia/Shanghai
+Java: ./mvnw -o verify — 45 tests, 0 failures/errors/skipped. Full output: build-results.txt; RED/GREEN monitor/tool outputs: java-red.txt/java-green.txt.
+Python: python3 -m unittest discover -s scripts/tests -v — 9 tests pass, including real SIGTERM cleanup, TIME_WAIT reuse, occupied ports, PID identity, dead/corrupt state and Grafana datasource failure.
+Prometheus: promtool check config config/prometheus.yml — valid config, four alert rules. promtool test rules config/prometheus-alerts.test.yml — SUCCESS; downtime, error-rate, P95, circuit firing/recovery and low traffic suppression.
+Isolated HTTP: new Jar on 18080, ECHOMIND_ENV_FILE empty, model base URL localhost:1, JEV disabled, retry max-attempts=1, Redis localhost:1, data/monitoring-test. /search POST twice succeeds (local model fallback); /monitor tool total=2, cache_hits=1, cache_hit_rate=0.5; /chat 200. /metrics confirms fluxagent_tool_cache_hit_ratio=0.5 and general Agent requests=1. No live model calls. Initial test with default retry timed out correctly; switched isolated retry setting for deterministic smoke.
+PromQL: all 22 panel expressions accepted against isolated real Prometheus scraping 18080; zero-request Agents excluded from success/latency; cache hit ratio=0.5. See dashboard-queries.txt.
+Docker daemon unavailable; container runtime not tested. Main IDE app stays on 8080 and needs a manual restart for new metrics.
+
+2026-11-10 提交前复验：./mvnw -o verify 于 18:34:20+08:00 完成，45 项测试通过，0 failures/errors/skipped，exit=0。python3 -m unittest discover -s scripts/tests -v：9 tests，OK，exit=0。promtool check config config/prometheus.yml 与 promtool test rules config/prometheus-alerts.test.yml：SUCCESS。未修改业务实现或测试。

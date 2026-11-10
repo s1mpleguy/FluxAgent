@@ -33,6 +33,7 @@ public class PerformanceMonitor {
     private final RestClient restClient;
     private final Counter monitorCollections;
     private final Timer monitorCollectionTimer;
+    private final RuntimeMetrics runtimeMetrics;
     private volatile double agentSuccessRate = 1.0;
     private volatile double toolSuccessRate = 1.0;
 
@@ -41,6 +42,7 @@ public class PerformanceMonitor {
         this.orchestrator = orchestrator;
         this.toolManager = toolManager;
         this.properties = properties;
+        this.runtimeMetrics = new RuntimeMetrics(meterRegistry);
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
         factory.setConnectTimeout(Duration.ofSeconds(2));
         factory.setReadTimeout(Duration.ofSeconds(2));
@@ -94,7 +96,8 @@ public class PerformanceMonitor {
         orchestrator.updateRoutingPenalties(penalties);
         double total = 0;
         double successes = 0;
-        for (Object value : toolManager.stats().values()) {
+        Map<String, Object> toolStats = toolManager.stats();
+        for (Object value : toolStats.values()) {
             if (value instanceof Map<?, ?> map) {
                 double count = asDouble(map.get("total"), 0);
                 total += count;
@@ -102,6 +105,7 @@ public class PerformanceMonitor {
             }
         }
         toolSuccessRate = total == 0 ? 1 : successes / total;
+        runtimeMetrics.update(agentStats, toolStats, activeAlerts.size(), resolvedAlerts.size());
         return notifications;
     }
 

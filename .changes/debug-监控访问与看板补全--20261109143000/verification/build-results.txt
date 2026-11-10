@@ -1,0 +1,240 @@
+[INFO] Scanning for projects...
+[INFO]
+[INFO] ----------------------< com.fluxagent:flux-agent >----------------------
+[INFO] Building FluxAgent 0.1.0
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO]
+[INFO] --- resources:3.3.1:resources (default-resources) @ flux-agent ---
+[INFO] Copying 1 resource from src/main/resources to target/classes
+[INFO]
+[INFO] --- compiler:3.14.0:compile (default-compile) @ flux-agent ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO]
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ flux-agent ---
+[INFO] skip non existing resourceDirectory /Users/weimengkun.3/FluxAgent/src/test/resources
+[INFO]
+[INFO] --- compiler:3.14.0:testCompile (default-testCompile) @ flux-agent ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO]
+[INFO] --- surefire:3.2.5:test (default-test) @ flux-agent ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO]
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running com.fluxagent.monitor.PerformanceMonitorTest
+Mockito is currently self-attaching to enable the inline-mock-maker. This will no longer work in future releases of the JDK. Please add Mockito as an agent to your build as described in Mockito's documentation: https://javadoc.io/doc/org.mockito/mockito-core/latest/org.mockito/org/mockito/Mockito.html#0.3
+WARNING: A Java agent has been loaded dynamically (/Users/weimengkun.3/.m2/repository/net/bytebuddy/byte-buddy-agent/1.17.5/byte-buddy-agent-1.17.5.jar)
+WARNING: If a serviceability tool is in use, please run with -XX:+EnableDynamicAgentLoading to hide this warning
+WARNING: If a serviceability tool is not in use, please run with -Djdk.instrument.traceUsage for more information
+WARNING: Dynamic loading of agents will be disallowed by default in a future release
+Java HotSpot(TM) 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+[INFO] Tests run: 8, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.661 s -- in com.fluxagent.monitor.PerformanceMonitorTest
+[INFO] Running com.fluxagent.llm.DeepSeekGatewayIntegrationTest
+14:20:56.158 [main] INFO org.springframework.test.context.support.AnnotationConfigContextLoaderUtils -- Could not detect default configuration classes for test class [com.fluxagent.llm.DeepSeekGatewayIntegrationTest]: DeepSeekGatewayIntegrationTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+14:20:56.210 [main] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Found @SpringBootConfiguration com.fluxagent.FluxAgentApplication for test class com.fluxagent.llm.DeepSeekGatewayIntegrationTest
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v3.5.0)
+
+2026-11-09T14:20:56.413+08:00  INFO 65965 --- [flux-agent] [           main] c.f.llm.DeepSeekGatewayIntegrationTest   : Starting DeepSeekGatewayIntegrationTest using Java 21.0.11 with PID 65965 (started by weimengkun.3 in /Users/weimengkun.3/FluxAgent)
+2026-11-09T14:20:56.414+08:00  INFO 65965 --- [flux-agent] [           main] c.f.llm.DeepSeekGatewayIntegrationTest   : The following 1 profile is active: "deepseek"
+2026-11-09T14:20:56.829+08:00  INFO 65965 --- [flux-agent] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Multiple Spring Data modules found, entering strict repository configuration mode
+2026-11-09T14:20:56.830+08:00  INFO 65965 --- [flux-agent] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2026-11-09T14:20:56.846+08:00  INFO 65965 --- [flux-agent] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 8 ms. Found 0 Redis repository interfaces.
+2026-11-09T14:20:57.529+08:00  INFO 65965 --- [flux-agent] [           main] c.f.llm.DeepSeekGatewayIntegrationTest   : Started DeepSeekGatewayIntegrationTest in 1.244 seconds (process running for 2.37)
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.512 s -- in com.fluxagent.llm.DeepSeekGatewayIntegrationTest
+[INFO] Running com.fluxagent.memory.MemoryManagerTest
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.178 s -- in com.fluxagent.memory.MemoryManagerTest
+[INFO] Running com.fluxagent.chat.ChatServiceTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.044 s -- in com.fluxagent.chat.ChatServiceTest
+[INFO] Running com.fluxagent.config.ModelConfigurationTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.042 s -- in com.fluxagent.config.ModelConfigurationTest
+[INFO] Running com.fluxagent.cli.ChatCliTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.019 s -- in com.fluxagent.cli.ChatCliTest
+[INFO] Running com.fluxagent.intent.JevIntentClientTest
+2026-11-09T14:20:58.205+08:00  WARN 65965 --- [flux-agent] [           main] com.fluxagent.intent.JevIntentClient     : Jev intent request failed (TimeoutException); using existing recognizer
+2026-11-09T14:20:58.235+08:00  WARN 65965 --- [flux-agent] [           main] com.fluxagent.intent.JevIntentClient     : Jev intent request failed with HTTP 401; using existing recognizer
+2026-11-09T14:20:58.238+08:00  WARN 65965 --- [flux-agent] [           main] com.fluxagent.intent.JevIntentClient     : Jev intent request failed (JsonParseException); using existing recognizer
+2026-11-09T14:20:58.324+08:00  WARN 65965 --- [flux-agent] [           main] com.fluxagent.intent.JevIntentClient     : Jev intent request failed (ExecutionException); using existing recognizer
+[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.397 s -- in com.fluxagent.intent.JevIntentClientTest
+[INFO] Running com.fluxagent.intent.IntentRecognizerTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.058 s -- in com.fluxagent.intent.IntentRecognizerTest
+[INFO] Running com.fluxagent.api.ApiIntegrationTest
+2026-11-09T14:20:58.391+08:00  INFO 65965 --- [flux-agent] [           main] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.fluxagent.api.ApiIntegrationTest]: ApiIntegrationTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-11-09T14:20:58.400+08:00  INFO 65965 --- [flux-agent] [           main] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.fluxagent.FluxAgentApplication for test class com.fluxagent.api.ApiIntegrationTest
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v3.5.0)
+
+2026-11-09T14:20:58.424+08:00  INFO 65965 --- [flux-agent] [           main] com.fluxagent.api.ApiIntegrationTest     : Starting ApiIntegrationTest using Java 21.0.11 with PID 65965 (started by weimengkun.3 in /Users/weimengkun.3/FluxAgent)
+2026-11-09T14:20:58.425+08:00  INFO 65965 --- [flux-agent] [           main] com.fluxagent.api.ApiIntegrationTest     : The following 1 profile is active: "deepseek"
+2026-11-09T14:20:58.620+08:00  INFO 65965 --- [flux-agent] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Multiple Spring Data modules found, entering strict repository configuration mode
+2026-11-09T14:20:58.621+08:00  INFO 65965 --- [flux-agent] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2026-11-09T14:20:58.624+08:00  INFO 65965 --- [flux-agent] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 3 ms. Found 0 Redis repository interfaces.
+2026-11-09T14:20:59.022+08:00  INFO 65965 --- [flux-agent] [           main] o.s.b.t.m.w.SpringBootMockServletContext : Initializing Spring TestDispatcherServlet ''
+2026-11-09T14:20:59.022+08:00  INFO 65965 --- [flux-agent] [           main] o.s.t.web.servlet.TestDispatcherServlet  : Initializing Servlet ''
+2026-11-09T14:20:59.024+08:00  INFO 65965 --- [flux-agent] [           main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 4 endpoints beneath base path '/actuator'
+2026-11-09T14:20:59.030+08:00  INFO 65965 --- [flux-agent] [           main] o.s.t.web.servlet.TestDispatcherServlet  : Completed initialization in 8 ms
+2026-11-09T14:20:59.052+08:00  INFO 65965 --- [flux-agent] [           main] com.fluxagent.api.ApiIntegrationTest     : Started ApiIntegrationTest in 0.648 seconds (process running for 3.893)
+2026-11-09T14:20:59.085+08:00  WARN 65965 --- [flux-agent] [           main] o.s.core.events.SpringDocAppInitializer  : SpringDoc /v3/api-docs endpoint is enabled by default. To disable it in production, set the property 'springdoc.api-docs.enabled=false'
+2026-11-09T14:20:59.285+08:00  INFO 65965 --- [flux-agent] [           main] o.springdoc.api.AbstractOpenApiResource  : Init duration for springdoc-openapi is: 91 ms
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.910 s -- in com.fluxagent.api.ApiIntegrationTest
+[INFO] Running com.fluxagent.tool.CircuitBreakerTest
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.001 s -- in com.fluxagent.tool.CircuitBreakerTest
+[INFO] Running com.fluxagent.tool.KnowledgeToolManagerTest
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.038 s -- in com.fluxagent.tool.KnowledgeToolManagerTest
+[INFO] Running com.fluxagent.tool.ToolExecutorTest
+[INFO] Tests run: 9, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.116 s -- in com.fluxagent.tool.ToolExecutorTest
+[INFO]
+[INFO] Results:
+[INFO]
+[INFO] Tests run: 45, Failures: 0, Errors: 0, Skipped: 0
+[INFO]
+[INFO]
+[INFO] --- jar:3.4.1:jar (default-jar) @ flux-agent ---
+[INFO] Building jar: /Users/weimengkun.3/FluxAgent/target/flux-agent-0.1.0.jar
+[INFO]
+[INFO] --- spring-boot:3.5.0:repackage (default) @ flux-agent ---
+[INFO] Replacing main artifact /Users/weimengkun.3/FluxAgent/target/flux-agent-0.1.0.jar with repackaged archive, adding nested dependencies in BOOT-INF/.
+[INFO] The original artifact has been renamed to /Users/weimengkun.3/FluxAgent/target/flux-agent-0.1.0.jar.original
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  6.154 s
+[INFO] Finished at: 2026-11-09T14:21:00+08:00
+[INFO] ------------------------------------------------------------------------
+
+
+2026-11-10 提交前复验：./mvnw -o verify，exit=0；完整输出如下。
+[INFO] Scanning for projects...
+[INFO]
+[INFO] ----------------------< com.fluxagent:flux-agent >----------------------
+[INFO] Building FluxAgent 0.1.0
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO]
+[INFO] --- resources:3.3.1:resources (default-resources) @ flux-agent ---
+[INFO] Copying 1 resource from src/main/resources to target/classes
+[INFO]
+[INFO] --- compiler:3.14.0:compile (default-compile) @ flux-agent ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO]
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ flux-agent ---
+[INFO] skip non existing resourceDirectory /Users/weimengkun.3/FluxAgent/src/test/resources
+[INFO]
+[INFO] --- compiler:3.14.0:testCompile (default-testCompile) @ flux-agent ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO]
+[INFO] --- surefire:3.2.5:test (default-test) @ flux-agent ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO]
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running com.fluxagent.monitor.PerformanceMonitorTest
+Mockito is currently self-attaching to enable the inline-mock-maker. This will no longer work in future releases of the JDK. Please add Mockito as an agent to your build as described in Mockito's documentation: https://javadoc.io/doc/org.mockito/mockito-core/latest/org.mockito/org/mockito/Mockito.html#0.3
+Java HotSpot(TM) 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+WARNING: A Java agent has been loaded dynamically (/Users/weimengkun.3/.m2/repository/net/bytebuddy/byte-buddy-agent/1.17.5/byte-buddy-agent-1.17.5.jar)
+WARNING: If a serviceability tool is in use, please run with -XX:+EnableDynamicAgentLoading to hide this warning
+WARNING: If a serviceability tool is not in use, please run with -Djdk.instrument.traceUsage for more information
+WARNING: Dynamic loading of agents will be disallowed by default in a future release
+[INFO] Tests run: 8, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.279 s -- in com.fluxagent.monitor.PerformanceMonitorTest
+[INFO] Running com.fluxagent.llm.DeepSeekGatewayIntegrationTest
+18:34:08.721 [main] INFO org.springframework.test.context.support.AnnotationConfigContextLoaderUtils -- Could not detect default configuration classes for test class [com.fluxagent.llm.DeepSeekGatewayIntegrationTest]: DeepSeekGatewayIntegrationTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+18:34:08.831 [main] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Found @SpringBootConfiguration com.fluxagent.FluxAgentApplication for test class com.fluxagent.llm.DeepSeekGatewayIntegrationTest
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v3.5.0)
+
+2026-11-10T18:34:09.308+08:00  INFO 61576 --- [flux-agent] [           main] c.f.llm.DeepSeekGatewayIntegrationTest   : Starting DeepSeekGatewayIntegrationTest using Java 21.0.11 with PID 61576 (started by weimengkun.3 in /Users/weimengkun.3/FluxAgent)
+2026-11-10T18:34:09.311+08:00  INFO 61576 --- [flux-agent] [           main] c.f.llm.DeepSeekGatewayIntegrationTest   : The following 1 profile is active: "deepseek"
+2026-11-10T18:34:10.257+08:00  INFO 61576 --- [flux-agent] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Multiple Spring Data modules found, entering strict repository configuration mode
+2026-11-10T18:34:10.258+08:00  INFO 61576 --- [flux-agent] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2026-11-10T18:34:10.290+08:00  INFO 61576 --- [flux-agent] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 16 ms. Found 0 Redis repository interfaces.
+2026-11-10T18:34:11.842+08:00  INFO 61576 --- [flux-agent] [           main] c.f.llm.DeepSeekGatewayIntegrationTest   : Started DeepSeekGatewayIntegrationTest in 2.851 seconds (process running for 5.089)
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 4.282 s -- in com.fluxagent.llm.DeepSeekGatewayIntegrationTest
+[INFO] Running com.fluxagent.memory.MemoryManagerTest
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.973 s -- in com.fluxagent.memory.MemoryManagerTest
+[INFO] Running com.fluxagent.chat.ChatServiceTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.126 s -- in com.fluxagent.chat.ChatServiceTest
+[INFO] Running com.fluxagent.config.ModelConfigurationTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.328 s -- in com.fluxagent.config.ModelConfigurationTest
+[INFO] Running com.fluxagent.cli.ChatCliTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.110 s -- in com.fluxagent.cli.ChatCliTest
+[INFO] Running com.fluxagent.intent.JevIntentClientTest
+2026-11-10T18:34:14.820+08:00  WARN 61576 --- [flux-agent] [           main] com.fluxagent.intent.JevIntentClient     : Jev intent request failed (TimeoutException); using existing recognizer
+2026-11-10T18:34:14.845+08:00  WARN 61576 --- [flux-agent] [           main] com.fluxagent.intent.JevIntentClient     : Jev intent request failed with HTTP 401; using existing recognizer
+2026-11-10T18:34:14.847+08:00  WARN 61576 --- [flux-agent] [           main] com.fluxagent.intent.JevIntentClient     : Jev intent request failed (JsonParseException); using existing recognizer
+2026-11-10T18:34:14.938+08:00  WARN 61576 --- [flux-agent] [           main] com.fluxagent.intent.JevIntentClient     : Jev intent request failed (ExecutionException); using existing recognizer
+[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.449 s -- in com.fluxagent.intent.JevIntentClientTest
+[INFO] Running com.fluxagent.intent.IntentRecognizerTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.089 s -- in com.fluxagent.intent.IntentRecognizerTest
+[INFO] Running com.fluxagent.api.ApiIntegrationTest
+2026-11-10T18:34:15.038+08:00  INFO 61576 --- [flux-agent] [           main] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.fluxagent.api.ApiIntegrationTest]: ApiIntegrationTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-11-10T18:34:15.062+08:00  INFO 61576 --- [flux-agent] [           main] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.fluxagent.FluxAgentApplication for test class com.fluxagent.api.ApiIntegrationTest
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v3.5.0)
+
+2026-11-10T18:34:15.166+08:00  INFO 61576 --- [flux-agent] [           main] com.fluxagent.api.ApiIntegrationTest     : Starting ApiIntegrationTest using Java 21.0.11 with PID 61576 (started by weimengkun.3 in /Users/weimengkun.3/FluxAgent)
+2026-11-10T18:34:15.166+08:00  INFO 61576 --- [flux-agent] [           main] com.fluxagent.api.ApiIntegrationTest     : The following 1 profile is active: "deepseek"
+2026-11-10T18:34:15.936+08:00  INFO 61576 --- [flux-agent] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Multiple Spring Data modules found, entering strict repository configuration mode
+2026-11-10T18:34:15.937+08:00  INFO 61576 --- [flux-agent] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2026-11-10T18:34:15.951+08:00  INFO 61576 --- [flux-agent] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 7 ms. Found 0 Redis repository interfaces.
+2026-11-10T18:34:17.790+08:00  INFO 61576 --- [flux-agent] [           main] o.s.b.t.m.w.SpringBootMockServletContext : Initializing Spring TestDispatcherServlet ''
+2026-11-10T18:34:17.791+08:00  INFO 61576 --- [flux-agent] [           main] o.s.t.web.servlet.TestDispatcherServlet  : Initializing Servlet ''
+2026-11-10T18:34:17.800+08:00  INFO 61576 --- [flux-agent] [           main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 4 endpoints beneath base path '/actuator'
+2026-11-10T18:34:17.816+08:00  INFO 61576 --- [flux-agent] [           main] o.s.t.web.servlet.TestDispatcherServlet  : Completed initialization in 25 ms
+2026-11-10T18:34:17.863+08:00  INFO 61576 --- [flux-agent] [           main] com.fluxagent.api.ApiIntegrationTest     : Started ApiIntegrationTest in 2.751 seconds (process running for 11.11)
+2026-11-10T18:34:17.948+08:00  WARN 61576 --- [flux-agent] [           main] o.s.core.events.SpringDocAppInitializer  : SpringDoc /v3/api-docs endpoint is enabled by default. To disable it in production, set the property 'springdoc.api-docs.enabled=false'
+2026-11-10T18:34:18.991+08:00  INFO 61576 --- [flux-agent] [           main] o.springdoc.api.AbstractOpenApiResource  : Init duration for springdoc-openapi is: 532 ms
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 4.030 s -- in com.fluxagent.api.ApiIntegrationTest
+[INFO] Running com.fluxagent.tool.CircuitBreakerTest
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.013 s -- in com.fluxagent.tool.CircuitBreakerTest
+[INFO] Running com.fluxagent.tool.KnowledgeToolManagerTest
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.163 s -- in com.fluxagent.tool.KnowledgeToolManagerTest
+[INFO] Running com.fluxagent.tool.ToolExecutorTest
+[INFO] Tests run: 9, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.211 s -- in com.fluxagent.tool.ToolExecutorTest
+[INFO]
+[INFO] Results:
+[INFO]
+[INFO] Tests run: 45, Failures: 0, Errors: 0, Skipped: 0
+[INFO]
+[INFO]
+[INFO] --- jar:3.4.1:jar (default-jar) @ flux-agent ---
+[INFO]
+[INFO] --- spring-boot:3.5.0:repackage (default) @ flux-agent ---
+[INFO] Replacing main artifact /Users/weimengkun.3/FluxAgent/target/flux-agent-0.1.0.jar with repackaged archive, adding nested dependencies in BOOT-INF/.
+[INFO] The original artifact has been renamed to /Users/weimengkun.3/FluxAgent/target/flux-agent-0.1.0.jar.original
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  17.342 s
+[INFO] Finished at: 2026-11-10T18:34:20+08:00
+[INFO] ------------------------------------------------------------------------

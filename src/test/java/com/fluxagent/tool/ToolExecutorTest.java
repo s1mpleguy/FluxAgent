@@ -62,6 +62,20 @@ class ToolExecutorTest {
     }
 
     @Test
+    void reportsCacheHitsWithoutCountingMissesAsHits() {
+        var tool = tool("echo", p -> "ok", Duration.ofSeconds(1), Duration.ofSeconds(10));
+        registry.register(tool);
+        executor.execute(tool, Map.of("query", "hello"));
+        executor.execute(tool, Map.of("query", "hello"));
+        clock.advance(Duration.ofSeconds(10));
+        executor.execute(tool, Map.of("query", "hello"));
+        Map<?, ?> snapshot = (Map<?, ?>) executor.stats().get("echo");
+        assertThat(snapshot.get("total")).isEqualTo(3L);
+        assertThat(snapshot.get("cache_hits")).isEqualTo(1L);
+        assertThat(snapshot.get("cache_hit_rate")).isEqualTo(1.0 / 3);
+    }
+
+    @Test
     void fallbackDoesNotHideFailuresOrPolluteCache() {
         AtomicInteger calls = new AtomicInteger();
         var tool = new ToolDefinition<>("broken", "test", mapper.createObjectNode(), Duration.ofSeconds(1),

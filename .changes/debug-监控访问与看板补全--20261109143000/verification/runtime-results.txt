@@ -1,0 +1,13 @@
+2026-11-09T14:42:48.842097+08:00
+Native installation: Homebrew Prometheus 3.16.0; official Grafana 13.2.4 darwin-arm64 archive.
+Grafana SHA256 verified before extraction: a910966466359212f1d875748a72a4638c7d3724448d0c369210b31d763b165d.
+Prometheus /graph HTTP/browser success, frontend routes to /query. Browser renders Query/Alerts/Status.
+Grafana /api/health: database=ok, version=13.2.4. /api/dashboards/uid/fluxagent-overview: provisioned=true, 22 panels. Browser renders FluxAgent 运行监控, application state 正常, no-traffic panels 暂无数据.
+Grafana datasource proxy query returned up=1; python3 scripts/monitoring.py check exit=0.
+Repeated start preserved original PIDs (Prometheus 67246 / Grafana 76393). stop/start succeeded immediately; final PIDs: {'prometheus': 86139, 'grafana': 86162}.
+Immediately after restart check correctly returned nonzero before first scrape; after the documented 10s scrape interval check passed.
+Main IDE Java PID 72613 remains on 8080. Isolated Java/Prometheus on 18080/19091 stopped. Verified vendor installation retained; temporary download parts/archive removed.
+Grafana optional plugin/alerting provisioning directories added to prevent missing-directory errors. Native Grafana upstream logs a /proc self-process metric warning on macOS; application datasource and dashboards verified independently.
+Docker unavailable: Compose YAML parsed but containers not executed. No real model calls, eval baseline changes, commits or pushes.
+
+2026-11-10 提交前现场复核：Prometheus/Grafana 页面健康，均由本项目管理。python3 scripts/monitoring.py check exit=1，原因是 127.0.0.1:8080 连接被拒绝，Prometheus 应用 target=down、self target=up；当前主应用未运行。此为运行环境状态，未自动启动模型应用。2026-11-09 的完整启动、抓取、看板、重启验收记录保留。

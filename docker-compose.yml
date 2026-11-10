@@ -67,9 +67,10 @@ services:
     image: prom/prometheus:v2.55.1
     container_name: echomind-java-prometheus
     ports:
-      - "9091:9090"
+      - "127.0.0.1:9091:9090"
     volumes:
       - ./config/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./config/prometheus-alerts.yml:/etc/prometheus/prometheus-alerts.yml:ro
       - prometheus-data:/prometheus
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
@@ -77,6 +78,27 @@ services:
     depends_on:
       echomind-java:
         condition: service_started
+
+  grafana:
+    image: grafana/grafana:13.2.4
+    container_name: fluxagent-grafana
+    ports:
+      - "127.0.0.1:3000:3000"
+    environment:
+      - PROMETHEUS_URL=http://prometheus:9090
+      - FLUXAGENT_DASHBOARD_PATH=/var/lib/grafana/dashboards
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Viewer
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
+      - GF_ANALYTICS_REPORTING_ENABLED=false
+      - GF_PLUGINS_PREINSTALL_DISABLED=true
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./config/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./config/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      - prometheus
 
   nginx:
     image: nginx:1.27-alpine
@@ -94,3 +116,4 @@ volumes:
   chromadb-data:
   app-data:
   prometheus-data:
+  grafana-data:

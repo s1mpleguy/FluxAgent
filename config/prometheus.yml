@@ -2,8 +2,11 @@ global:
   scrape_interval: 15s
   evaluation_interval: 15s
   external_labels:
-    cluster: echomind-java
+    cluster: fluxagent
     environment: production
+
+rule_files:
+  - prometheus-alerts.yml
 
 scrape_configs:
   - job_name: echomind-java-app
@@ -13,7 +16,7 @@ scrape_configs:
       - targets:
           - echomind-java:8080
         labels:
-          service: echomind-java
+          service: fluxagent
 
   - job_name: prometheus
     static_configs:

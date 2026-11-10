@@ -1,0 +1,101 @@
+rule_files:
+  - prometheus-alerts.yml
+evaluation_interval: 10s
+tests:
+  - interval: 10s
+    input_series:
+      - series: 'up{service="fluxagent",instance="test:8080"}'
+        values: '1 0+0x8 1+0x6'
+    alert_rule_test:
+      - eval_time: 30s
+        alertname: FluxAgentUnavailable
+        exp_alerts: []
+      - eval_time: 80s
+        alertname: FluxAgentUnavailable
+        exp_alerts:
+          - exp_labels:
+              service: fluxagent
+              instance: test:8080
+              severity: critical
+            exp_annotations:
+              summary: "FluxAgent 指标端点无法采集"
+              description: "检查 test:8080 的 Java 进程、端口和 /metrics。"
+      - eval_time: 120s
+        alertname: FluxAgentUnavailable
+        exp_alerts: []
+  - interval: 10s
+    input_series:
+      - series: 'fluxagent_tool_circuit_state{service="fluxagent",instance="test:8080",tool="knowledge_search"}'
+        values: '1+0x8 0+0x5'
+    alert_rule_test:
+      - eval_time: 70s
+        alertname: FluxAgentToolCircuitOpen
+        exp_alerts:
+          - exp_labels:
+              service: fluxagent
+              instance: test:8080
+              tool: knowledge_search
+              severity: warning
+            exp_annotations:
+              summary: "FluxAgent 工具熔断未恢复"
+              description: "工具 knowledge_search 连续处于 open 状态，请检查依赖。"
+      - eval_time: 120s
+        alertname: FluxAgentToolCircuitOpen
+        exp_alerts: []
+
+  - interval: 10s
+    input_series:
+      - series: 'echomind_chat_duration_seconds_count{service="fluxagent",instance="test:8080",outcome="error"}'
+        values: '0+2x24 48+0x36'
+      - series: 'echomind_chat_duration_seconds_count{service="fluxagent",instance="test:8080",outcome="success"}'
+        values: '0+8x61'
+    alert_rule_test:
+      - eval_time: 3m
+        alertname: FluxAgentChatErrors
+        exp_alerts:
+          - exp_labels:
+              instance: test:8080
+              severity: warning
+            exp_annotations:
+              summary: "FluxAgent 聊天处理失败率超过 10%"
+              description: "此指标是执行失败率，不是回答错误率。"
+      - eval_time: 10m
+        alertname: FluxAgentChatErrors
+        exp_alerts: []
+  - interval: 10s
+    input_series:
+      - series: 'echomind_chat_duration_seconds_bucket{service="fluxagent",instance="test:8080",le="1"}'
+        values: '0+0x24 10+10x36'
+      - series: 'echomind_chat_duration_seconds_bucket{service="fluxagent",instance="test:8080",le="5"}'
+        values: '0+10x61'
+      - series: 'echomind_chat_duration_seconds_bucket{service="fluxagent",instance="test:8080",le="+Inf"}'
+        values: '0+10x61'
+      - series: 'echomind_chat_duration_seconds_count{service="fluxagent",instance="test:8080",outcome="success"}'
+        values: '0+10x61'
+    alert_rule_test:
+      - eval_time: 3m
+        alertname: FluxAgentChatSlow
+        exp_alerts:
+          - exp_labels:
+              instance: test:8080
+              severity: warning
+            exp_annotations:
+              summary: "FluxAgent 聊天 P95 超过 3 秒"
+              description: "最近 5 分钟至少有 20 个请求；检查模型和工具耗时。"
+      - eval_time: 10m
+        alertname: FluxAgentChatSlow
+        exp_alerts: []
+  - interval: 10s
+    input_series:
+      - series: 'echomind_chat_duration_seconds_bucket{service="fluxagent",instance="quiet:8080",le="1"}'
+        values: '0+0x60'
+      - series: 'echomind_chat_duration_seconds_bucket{service="fluxagent",instance="quiet:8080",le="5"}'
+        values: '0+0.1x60'
+      - series: 'echomind_chat_duration_seconds_bucket{service="fluxagent",instance="quiet:8080",le="+Inf"}'
+        values: '0+0.1x60'
+      - series: 'echomind_chat_duration_seconds_count{service="fluxagent",instance="quiet:8080",outcome="success"}'
+        values: '0+0.1x60'
+    alert_rule_test:
+      - eval_time: 10m
+        alertname: FluxAgentChatSlow
+        exp_alerts: []

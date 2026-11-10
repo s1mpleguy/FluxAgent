@@ -70,6 +70,45 @@ class PerformanceMonitorTest {
     }
 
     @Test
+    void publishesAndUpdatesAgentToolAndAlertMetrics() {
+        stats(10, 0.5, 100);
+        when(tools.stats()).thenReturn(Map.of("knowledge_search", Map.of(
+                "total", 8L, "success_rate", 0.75, "avg_latency_ms", 250.0,
+                "cache_hits", 2L, "cache_hit_rate", 0.25, "circuit_state", "open")));
+        monitor.collect();
+        assertThat(registry.get("fluxagent.agent.requests").tag("agent", "general").gauge().value()).isEqualTo(10);
+        assertThat(registry.get("fluxagent.agent.success.ratio").tag("agent", "general").gauge().value()).isEqualTo(0.5);
+        assertThat(registry.get("fluxagent.agent.latency.seconds").tag("agent", "general").gauge().value()).isEqualTo(0.1);
+        assertThat(registry.get("fluxagent.tool.requests").tag("tool", "knowledge_search").gauge().value()).isEqualTo(8);
+        assertThat(registry.get("fluxagent.tool.cache.hit.ratio").tag("tool", "knowledge_search").gauge().value()).isEqualTo(0.25);
+        assertThat(registry.get("fluxagent.tool.circuit.state").tag("tool", "knowledge_search").gauge().value()).isEqualTo(1);
+        assertThat(registry.get("fluxagent.alerts.active").gauge().value()).isEqualTo(1);
+        stats(20, 1, 200);
+        monitor.collect();
+        assertThat(registry.get("fluxagent.agent.requests").tag("agent", "general").gauge().value()).isEqualTo(20);
+        assertThat(registry.get("fluxagent.agent.latency.seconds").tag("agent", "general").gauge().value()).isEqualTo(0.2);
+        assertThat(registry.get("fluxagent.alerts.active").gauge().value()).isZero();
+        assertThat(registry.get("fluxagent.alerts.resolved.retained").gauge().value()).isEqualTo(1);
+    }
+
+    @Test
+    void removesUnregisteredSeriesAndRecreatesThemWithFreshValues() {
+        stats(1, 1, 100);
+        when(tools.stats()).thenReturn(Map.of("temporary", Map.of("total", 5, "circuit_state", "half_open")));
+        monitor.collect();
+        assertThat(registry.get("fluxagent.tool.circuit.state").tag("tool", "temporary").gauge().value()).isEqualTo(2);
+        when(orchestrator.stats()).thenReturn(Map.of());
+        when(tools.stats()).thenReturn(Map.of());
+        monitor.collect();
+        assertThat(registry.find("fluxagent.agent.requests").gauges()).isEmpty();
+        assertThat(registry.find("fluxagent.tool.requests").gauges()).isEmpty();
+        when(tools.stats()).thenReturn(Map.of("temporary", Map.of("total", 1, "circuit_state", "closed")));
+        monitor.collect();
+        assertThat(registry.get("fluxagent.tool.requests").tag("tool", "temporary").gauge().value()).isEqualTo(1);
+        assertThat(registry.get("fluxagent.tool.circuit.state").tag("tool", "temporary").gauge().value()).isZero();
+    }
+
+    @Test
     void roundedDisplayAveragesDoNotCauseFalseLatencySpikes() {
         var agent = new GeneralAgent((system, prompt, temperature, tokens) -> "ok", null);
         var realOrchestrator = new AgentOrchestrator(mock(IntentRecognizer.class), Map.of(AgentType.GENERAL, List.of(agent)));

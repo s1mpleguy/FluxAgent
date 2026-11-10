@@ -177,6 +177,18 @@ Java 版已经实现：
 - `/actuator/prometheus`
 - Webhook 告警
 - Agent 路由惩罚反馈
+- Grafana 自动配置看板（请求、Agent、工具缓存/熔断、告警、JVM）
+- 无 Docker 的本地监控启动、停止和链路检查脚本
+
+IDE 或 `java -jar` 启动不会同时启动 Prometheus。macOS 安装 `brew install prometheus grafana` 后，在仓库执行：
+
+```bash
+python3 scripts/monitoring.py start
+python3 scripts/monitoring.py check
+```
+
+Prometheus：`http://localhost:9091/graph`；Grafana：`http://localhost:3000/d/fluxagent-overview/fluxagent`。
+运行、指标与排障说明见 [监控运行指南](docs/监控运行指南.md)，其余能力的真实状态见 [模块现状与后续规划](docs/模块现状与后续规划.md)。
 
 相关实现：
 
@@ -463,6 +475,7 @@ Compose 服务和端口：
 | Java App | `echomind-java-app` | `http://localhost:8080` |
 | Nginx | `echomind-java-nginx` | `http://localhost:8081` |
 | Prometheus | `echomind-java-prometheus` | `http://localhost:9091` |
+| Grafana | `fluxagent-grafana` | `http://localhost:3000` |
 | ChromaDB（可选 profile） | `echomind-java-chromadb` | `http://localhost:8002` |
 | Redis | `echomind-java-redis` | `localhost:6380` |
 

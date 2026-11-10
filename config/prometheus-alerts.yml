@@ -1,0 +1,35 @@
+groups:
+  - name: fluxagent
+    rules:
+      - alert: FluxAgentUnavailable
+        expr: up{service="fluxagent"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "FluxAgent 指标端点无法采集"
+          description: "检查 {{ $labels.instance }} 的 Java 进程、端口和 /metrics。"
+      - alert: FluxAgentChatErrors
+        expr: sum by (instance) (rate(echomind_chat_duration_seconds_count{service="fluxagent",outcome="error"}[5m])) / sum by (instance) (rate(echomind_chat_duration_seconds_count{service="fluxagent"}[5m])) > 0.1
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "FluxAgent 聊天处理失败率超过 10%"
+          description: "此指标是执行失败率，不是回答错误率。"
+      - alert: FluxAgentChatSlow
+        expr: histogram_quantile(0.95, sum by (instance, le) (rate(echomind_chat_duration_seconds_bucket{service="fluxagent"}[5m]))) > 3 and on (instance) sum by (instance) (increase(echomind_chat_duration_seconds_count{service="fluxagent"}[5m])) >= 20
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "FluxAgent 聊天 P95 超过 3 秒"
+          description: "最近 5 分钟至少有 20 个请求；检查模型和工具耗时。"
+      - alert: FluxAgentToolCircuitOpen
+        expr: fluxagent_tool_circuit_state{service="fluxagent"} == 1
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "FluxAgent 工具熔断未恢复"
+          description: "工具 {{ $labels.tool }} 连续处于 open 状态，请检查依赖。"

@@ -57,7 +57,7 @@ public class ToolExecutor implements AutoCloseable {
         long generation = registration.generation();
         T cached = registration.cached(input, clock.instant());
         if (cached != null) {
-            registration.stats.record(true, elapsed(start));
+            registration.stats.recordCacheHit(elapsed(start));
             return new ToolResult<>(true, cached, definition.name(), null, true, elapsed(start), false);
         }
         var breaker = registration.breaker(clock);
